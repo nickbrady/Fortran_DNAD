@@ -96,24 +96,26 @@
 !******************************************************************************
 
 ! Number of design variables (default = 1)
-#ifndef ndv
-#define ndv 1
-#endif
+! #ifndef ndv
+! #define ndv 1
+! #endif
+
 
 module dnadmod
 
     implicit none
+    integer, PARAMETER :: ndv = 1
 
     private
 
     real :: negative_one = -1.0
-    type,public:: dual  ! make this private will create difficulty to use the
+    type, public :: dual  ! make this private will create difficulty to use the
                         ! original write/read commands, hence x and dx are
                         ! variables which can be accessed using D%x and D%dx in
                         ! other units using this module in which D is defined
                         ! as type(dual).
         sequence
-        real :: x  ! functional value
+        real :: x        ! functional value
         real :: dx(ndv)  ! derivative
     end type dual
 
@@ -1816,3 +1818,22 @@ contains
     end function set_NaN
 
 end module dnadmod
+
+
+
+
+PROGRAM CircleArea
+  use dnadmod
+
+  TYPE (DUAL) :: PI = DUAL(4.0D0*ATAN(1.0D0),(/0.D0/))
+  TYPE (DUAL) :: radius, area
+
+  radius = DUAL(3.0, (/1.D0/) )
+
+	Area = PI * radius ** 2
+
+  WRITE(*,*) "AREA=", Area
+	WRITE(*,*) 'radius = ', radius
+	write(*,*) 'PI =', PI
+
+END PROGRAM CircleArea

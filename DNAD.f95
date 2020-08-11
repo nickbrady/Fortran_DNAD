@@ -1826,42 +1826,53 @@ end module dnadmod
 
 
 
-! Examples Taken from:
+! CircleArea example taken from:
 ! DNAD, a Simple Tool for Automatic Differentiation of Fortran Codes Using Dual Numbers
 
-
+! All variables and functions of variables need to be redefined as TYPE (DUAL)
+! All constants should be redefined as real (instead of double precision)
+! Then the compiler option can be used to define the precision
+!   gfortran DNAD.f95 -fdefault-real-8
+!   gfortran DNAD.f95 -fdefault-real-16   is available with gfortran 8 and above
 PROGRAM CircleArea
   use dnadmod
 
-  TYPE (DUAL) :: PI = DUAL(4.0D0*ATAN(1.0D0),(/0.D0/))  ! It is unclear why PI
-  TYPE (DUAL) :: radius, area                           ! needs to be DUAL
-  double precision :: dAdr
+  TYPE (DUAL) :: radius, Area
+  real :: PI = 4.0D0*ATAN(1.0D0)
+  real :: dAdr
 
   integer :: i
-  double precision :: a(11) = (/(i/10.0, i=0,10, 1)/)
-  type (DUAL) :: xx = DUAL(1.0, (/1.D0, 0.D0/))
-  type (DUAL) :: yy, zz
+  real :: a(11) = (/(i/10.0, i=0,10, 1)/)
+
+  type (DUAL) :: xx = DUAL(1.0, (/1.D0, 0.D0/)), sine
+  type (DUAL) :: y, z, f
 
   radius = DUAL(3.0, (/1.D0/) )
 
 	Area = PI * radius ** 2
-  dAdr = 2. * PI%x * radius%x
+  dAdr = 2. * PI * radius%x
 
-  WRITE(*,*) "AREA = ", Area
-  write(*,*) "dAdr = ", dAdr
-	WRITE(*,*) 'radius = ', radius%x
-	write(*,*) 'PI =', PI
+  WRITE(*,*) "AREA = ", Area%x
+  write(*,*) "dAdr = ", Area%dx(1), dAdr
+  WRITE(*,*) 'radius = ', radius%x
+  write(*,*) 'PI =', PI
 
+  write(*,*) ""
 
-  ! do i = 1, size(a)
-  !   xx = DUAL(a(i) * PI%x, (/1.D0/))
-  !   write(*,*) i, xx, SIN(xx), COS(xx%x)
-  ! end do
-  ! write(*,*) ""
-  ! do i = 1, 10
-  !   yy = DUAL(float(i), (/1.D0, 0.D0/))
-  !   zz = DUAL(float(i), (/0.D0, 1.D0/))
-  !   write(*,*) yy * zz**2, zz%x**2, 2.0 * yy%x * zz%x
-  ! end do
+  do i = 1, size(a)
+    xx = DUAL(a(i) * PI, (/1.D0/))
+    sine = SIN(xx)
+    write(*,*) i, xx%x, sine%x, sine%dx(1), COS(xx%x)
+  end do
+
+  write(*,*) ""
+
+  do i = 1, 10
+    y = DUAL(float(i), (/1.D0, 0.D0/))
+    z = DUAL(float(i)*3, (/0.D0, 1.D0/))
+    f = y * z**2
+    ! f = y * z^2, df/dy = z^2, df/dz = 2yz
+    write(*,*) i, f%x, f%dx(1), z%x**2, f%dx(2), 2.0 * y%x * z%x
+  end do
 
 END PROGRAM CircleArea

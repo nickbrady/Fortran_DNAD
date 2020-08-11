@@ -100,11 +100,16 @@
 ! #define ndv 1
 ! #endif
 
+module user_input
+  integer, PARAMETER :: N = 2
+
+end module user_input
 
 module dnadmod
-
+    use user_input, only: N
     implicit none
-    integer, PARAMETER :: ndv = 1
+
+    integer, PARAMETER :: ndv = N
 
     private
 
@@ -1821,19 +1826,43 @@ end module dnadmod
 
 
 
+! Examples Taken from:
+! DNAD, a Simple Tool for Automatic Differentiation of Fortran Codes Using Dual Numbers
+
 
 PROGRAM CircleArea
   use dnadmod
 
   TYPE (DUAL) :: PI = DUAL(4.0D0*ATAN(1.0D0),(/0.D0/))
   TYPE (DUAL) :: radius, area
+  double precision :: dAdr
+
+  integer :: i
+  double precision :: a(11) = (/(i/10.0, i=0,10, 1)/)
+  type (DUAL) :: xx = DUAL(1.0, (/1.D0, 0.D0/))
+  type (DUAL) :: yy, zz
 
   radius = DUAL(3.0, (/1.D0/) )
 
 	Area = PI * radius ** 2
+  dAdr = 2. * PI%x * radius%x
 
-  WRITE(*,*) "AREA=", Area
-	WRITE(*,*) 'radius = ', radius
+  WRITE(*,*) "AREA = ", Area
+  write(*,*) "dAdr = ", dAdr
+	WRITE(*,*) 'radius = ', radius%x
 	write(*,*) 'PI =', PI
+
+  write(*,*) PI + xx
+
+  ! do i = 1, size(a)
+  !   xx = DUAL(a(i) * PI%x, (/1.D0/))
+  !   write(*,*) i, xx, SIN(xx), COS(xx%x)
+  ! end do
+  write(*,*) ""
+  do i = 1, 10
+    yy = DUAL(float(i), (/1.D0, 0.D0/))
+    zz = DUAL(float(i), (/0.D0, 1.D0/))
+    write(*,*) yy * zz**2, zz%x**2, 2.0 * yy%x * zz%x
+  end do
 
 END PROGRAM CircleArea

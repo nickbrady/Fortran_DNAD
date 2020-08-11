@@ -1833,8 +1833,8 @@ end module dnadmod
 PROGRAM CircleArea
   use dnadmod
 
-  TYPE (DUAL) :: PI = DUAL(4.0D0*ATAN(1.0D0),(/0.D0/))
-  TYPE (DUAL) :: radius, area
+  TYPE (DUAL) :: PI = DUAL(4.0D0*ATAN(1.0D0),(/0.D0/))  ! It is unclear why PI
+  TYPE (DUAL) :: radius, area                           ! needs to be DUAL
   double precision :: dAdr
 
   integer :: i
@@ -1852,17 +1852,16 @@ PROGRAM CircleArea
 	WRITE(*,*) 'radius = ', radius%x
 	write(*,*) 'PI =', PI
 
-  write(*,*) PI + xx
 
   ! do i = 1, size(a)
   !   xx = DUAL(a(i) * PI%x, (/1.D0/))
   !   write(*,*) i, xx, SIN(xx), COS(xx%x)
   ! end do
-  write(*,*) ""
-  do i = 1, 10
-    yy = DUAL(float(i), (/1.D0, 0.D0/))
-    zz = DUAL(float(i), (/0.D0, 1.D0/))
-    write(*,*) yy * zz**2, zz%x**2, 2.0 * yy%x * zz%x
-  end do
+  ! write(*,*) ""
+  ! do i = 1, 10
+  !   yy = DUAL(float(i), (/1.D0, 0.D0/))
+  !   zz = DUAL(float(i), (/0.D0, 1.D0/))
+  !   write(*,*) yy * zz**2, zz%x**2, 2.0 * yy%x * zz%x
+  ! end do
 
 END PROGRAM CircleArea

@@ -104,6 +104,8 @@ module user_input
   integer, PARAMETER :: N = 2
   integer, PARAMETER :: NJ = 12                           ! Number of mesh points
   integer, PARAMETER :: Numbertimesteps = 3.6d3*201       ! Number of time steps
+  real               :: delT = 1.0                        ! delta t (size of timestep) [s]
+  real               :: time                              ! [s]
 
   ! **************************** Physical Constants ****************************
   real :: Rigc = 8.314                     ! Ideal gas constant [J/(mol*K)]
@@ -113,6 +115,7 @@ module user_input
 
   ! **************************** Physical Parameters ****************************
   real :: diff = 1.0e-6
+  real :: k_rxn = 1.0
 
   real :: xmax  = 1.0            ! Electrode Thickness (cm) [1 um = 1d-4 cm]
   real :: cbulk = 1.0e-3          ! Electrolyte Concentration [mol/cm3]
@@ -1847,6 +1850,7 @@ end module dnadmod
 ! ******************************************************************************
 MODULE GOV_EQNS
   use user_input
+  use variables
   use dnadmod
   implicit none
 
@@ -1858,8 +1862,8 @@ MODULE GOV_EQNS
 CONTAINS
 
   FUNCTION FLUX(c_vars_dual, dcdx_vars_dual) Result (Flux_)
-    TYPE (DUAL), DIMENSION(N)       :: Flux_
-    TYPE (DUAL), dimension(N)       :: c_vars_dual, dcdx_vars_dual
+    TYPE (DUAL), DIMENSION(N)               :: Flux_
+    TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual, dcdx_vars_dual
     ! can define intermediate variables to improve readability
     ! i.e Phi_2 = c_vars_dual(2), dPhi2dx = dcdx_vars_dual(2)
 
@@ -1868,19 +1872,21 @@ CONTAINS
 
   END FUNCTION
 
-  FUNCTION GEN(c_vars_) Result (Gen_)
-    TYPE (DUAL)               :: Gen_
-    TYPE (DUAL), INTENT (IN)  :: c_vars_
+  FUNCTION RXN(c_vars_dual) Result (Rxn_)
+    TYPE (DUAL), DIMENSION(N)               :: Rxn_
+    TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual
 
-    Gen_ = 0.0
+    Rxn_(1) = k_rxn * c_vars_dual(1)**2.0
+    Rxn_(2) = k_rxn * c_vars_dual(2)
 
   END FUNCTION
 
-  FUNCTION ACCUM(c_vars_) Result (Accum_)
-    TYPE (DUAL)               :: Accum_
-    TYPE (DUAL), INTENT (IN)  :: c_vars_
+  FUNCTION ACCUM(c_vars_dual) Result (Accum_)
+    TYPE (DUAL), DIMENSION(N)               :: Accum_
+    TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual
 
-    Accum_ = 0.0
+    Accum_(1) = c_vars_dual(1)/delT       ! dc/dt
+    Accum_(2) = 0.0
 
   END FUNCTION
 
@@ -1986,12 +1992,15 @@ end program unsteady
 ! ------------------------------------------------------------------------------
 
 subroutine auto_fill!(j)
+  use user_input, only : N, NJ
   use GOV_EQNS
   use dnadmod
   use variables
 
   implicit none
   ! integer, intent (in) :: j
+  ! intent (in) :: cprev
+  ! intent (out) :: dW, dE, fW, fE, rj, smG
   integer :: j
   integer :: i, ic
 
@@ -2000,7 +2009,7 @@ subroutine auto_fill!(j)
 
   ! DUAL variables
   TYPE(DUAL), dimension(N) :: c_dual, dcdx_dual
-  TYPE(DUAL), dimension(N) :: flux_dualW, flux_dualE
+  TYPE(DUAL), dimension(N) :: flux_dualW, flux_dualE, reaction_dual, accumulation_dual
 
   ! set all matrix variables (dW, dE, fW, fE, rj, smG) to 0.0
   dW = 0.0
@@ -2012,41 +2021,67 @@ subroutine auto_fill!(j)
 
   j = 3   ! this needs to be deleted
 
-  alphaW = delx(j-1)/(delx(j-1)+delx(j))
-  alphaE = delx(j)/(delx(j+1)+delx(j))
-  betaW = 2.0/(delx(j-1)+delx(j))
-  betaE = 2.0/(delx(j)+delx(j+1))
+  if (j /= 1) then ! if j not equal to 1, then define the west-side interface variables
+    alphaW = delx(j-1)/(delx(j-1)+delx(j))
+    betaW = 2.0/(delx(j-1)+delx(j))
+    do ic=1,N
+      cW(ic)    = alphaW*cprev(ic,j) + (1.d0 - alphaW)*cprev(ic,j-1)
+      dcdxW(ic) = betaW * (cprev(ic,j) - cprev(ic,j-1))
+    end do
+  end if
 
-  do ic=1,N
-    cW(ic)    = alphaW*cprev(ic,j) + (1.d0 - alphaW)*cprev(ic,j-1)
-    cE(ic)    = alphaE*cprev(ic,j+1) + (1.d0 - alphaE)*cprev(ic,j)
-    dcdxW(ic) = betaW * (cprev(ic,j) - cprev(ic,j-1))
-    dcdxE(ic) = betaE * (cprev(ic,j+1) - cprev(ic,j))
-  end do
+  if (j /= NJ) then ! if j not equal to 1, then define the west-side interface variables
+    alphaE = delx(j)/(delx(j+1)+delx(j))
+    betaE = 2.0/(delx(j)+delx(j+1))
+    do ic=1,N
+      cE(ic)    = alphaE*cprev(ic,j+1) + (1.d0 - alphaE)*cprev(ic,j)
+      dcdxE(ic) = betaE * (cprev(ic,j+1) - cprev(ic,j))
+    end do
+  end if
 
   ! WEST SIDE
-  c_dual = c_to_dual(cW)
-  dcdx_dual = dcdx_to_dual(dcdxW)
-  flux_dualW = FLUX(c_dual, dcdx_dual)
+  if (j /= 1) then
+    c_dual = c_to_dual(cW)
+    dcdx_dual = dcdx_to_dual(dcdxW)
+    flux_dualW = FLUX(c_dual, dcdx_dual)
+  end if
+
   ! EAST SIDE
-  c_dual = c_to_dual(cE)
-  dcdx_dual = dcdx_to_dual(dcdxE)
-  flux_dualE = FLUX(c_dual, dcdx_dual)
+  if (j /= NJ) then
+    c_dual = c_to_dual(cE)
+    dcdx_dual = dcdx_to_dual(dcdxE)
+    flux_dualE = FLUX(c_dual, dcdx_dual)
+  end if
+
   ! Control Volume Terms
   c_dual = c_to_dual(cprev(:,j))
-  ! reaction = RXN(c_dual)
-  ! accumulation = ACCUM(c_dual)
+  reaction_dual = RXN(c_dual)
+  accumulation_dual = ACCUM(c_dual)
 
+  ! ****************************************************************************
+  ! ACCUM = IN - OUT + GEN
+  ! var_ :: value at previous timestep
+  ! dvar :: change variable
+  ! dACCUM = (IN_ + dIN) - (OUT_ + dOUT) + (GEN_ + dGEN)            ACCUM_ = 0.
+  ! dIN - dOUT + dGEN - dACCUM = -(In_ - OUT_ - GEN_)
+  ! ****************************************************************************
+  if ( (j /= 1).AND.(j /= NJ) ) then
+    ! loop to fill in the fillmat matrices: (dW, dE, fW, fE, rj, smG)
+    do ic = 1,N                   ! equation number
+      do i = 1,N                  ! specie number
+        fW(ic, i) = flux_dualW(ic)%dx(i)
+        fE(ic, i) = flux_dualE(ic)%dx(i)
+        dW(ic, i) = flux_dualW(ic)%dx(N+i)
+        dE(ic, i) = flux_dualE(ic)%dx(N+i)
 
+        rj(ic, i) = reaction_dual(ic)%dx(i) - accumulation_dual(ic)%dx(i)
+      end do
+      smG(ic) = -(flux_dualW(ic)%x - flux_dualE(ic)%x + reaction_dual(ic)%x)
+    end do
+  end if
 
-  write(*,*) cW
-  write(*,*) c_dual(1)
-  write(*,*) c_dual(2)
-  write(*,*) dcdx_dual(1)
-  write(*,*) dcdx_dual(2)
-  write(*,*) "FLUX"
-  write(*,*) flux_dualW(1)
-  write(*,*) flux_dualW(2)
+  ! write(*,*) rj
+  ! write(*,*) accumulation_dual(1)
 
 end subroutine auto_fill
 

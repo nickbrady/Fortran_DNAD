@@ -1850,18 +1850,21 @@ MODULE GOV_EQNS
   use dnadmod
   implicit none
 
+  ! define the fill_mat variables - shared with auto_fill and ABDGXY
+  real                  :: alphaW, alphaE, betaW, betaE
+  real, DIMENSION(N,N)  :: dW, dE, fW, fE, rj
+  real, DIMENSION(N)    :: smG
+
 CONTAINS
 
-  FUNCTION FLUX(c_vars_inter, dcdx_vars_inter) Result (Flux_)
-    TYPE (DUAL)                     :: Flux_
-    real, dimension(N), INTENT (IN) :: c_vars_inter, dcdx_vars_inter  ! the values of cprev and dcdx
-                                                                      ! at the control volume interfaces
+  FUNCTION FLUX(c_vars_dual, dcdx_vars_dual) Result (Flux_)
+    TYPE (DUAL), DIMENSION(N)       :: Flux_
+    TYPE (DUAL), dimension(N)       :: c_vars_dual, dcdx_vars_dual
+    ! can define intermediate variables to improve readability
+    ! i.e Phi_2 = c_vars_dual(2), dPhi2dx = dcdx_vars_dual(2)
 
-    TYPE (DUAL), dimension(size(c_vars_inter))  :: c_vars_dual, dcdx_vars_dual
-    c_vars_dual(1) = DUAL(c_vars_inter(1), (/1.0, 0.0/))
-    dcdx_vars_dual(1) = DUAL(dcdx_vars_inter(1), (/0.0, 1.0/))
-
-    Flux_ = -diff * dcdx_vars_dual(1)
+    Flux_(1) = -diff * dcdx_vars_dual(1)
+    Flux_(2) = c_vars_dual(1) * dcdx_vars_dual(2)
 
   END FUNCTION
 
@@ -1882,12 +1885,14 @@ CONTAINS
   END FUNCTION
 
 
-
-  ! Functions to convert concentration and dcdx variables to DUAL
+  ! ****************************************************************************
+  ! ******* Functions to convert concentration and dcdx variables to DUAL ******
+  ! ----------------------------------------------------------------------------
   FUNCTION c_to_dual(c_vars) RESULT (c_dual)
     TYPE (DUAL), DIMENSION(N)       :: c_dual
     real, DIMENSION(N), INTENT (IN) :: c_vars
     real, DIMENSION(N*2)            :: dx_array
+    INTEGER :: ic
 
     do ic = 1, N
       dx_array = 0.0              ! set the dx_array to zero (all elements)
@@ -1902,6 +1907,7 @@ CONTAINS
     TYPE (DUAL), DIMENSION(N)       :: dcdx_dual
     real, DIMENSION(N), INTENT (IN) :: dcdx
     real, DIMENSION(N*2)            :: dx_array
+    INTEGER :: ic
 
     do ic = 1, N
       dx_array = 0.0              ! set the dx_array to zero (all elements)
@@ -1911,6 +1917,9 @@ CONTAINS
     end do
 
   END FUNCTION dcdx_to_dual
+  ! ----------------------------------------------------------------------------
+  ! ****************************************************************************
+
 
 END MODULE GOV_EQNS
 
@@ -1976,21 +1985,32 @@ end program unsteady
 ! ***************************** END MAIN PROGRAM *******************************
 ! ------------------------------------------------------------------------------
 
-subroutine auto_fill
+subroutine auto_fill!(j)
   use GOV_EQNS
   use dnadmod
   use variables
 
   implicit none
-  integer :: i, j, ic
+  ! integer, intent (in) :: j
+  integer :: j
+  integer :: i, ic
 
-  real :: alphaW, alphaE, betaE, betaW
+  ! variables and there derivatives at the control volume interfaces
   real, dimension(N) :: cW, cE, dcdxW, dcdxE
 
+  ! DUAL variables
   TYPE(DUAL), dimension(N) :: c_dual, dcdx_dual
-  real, dimension(N*2) :: dx_array
+  TYPE(DUAL), dimension(N) :: flux_dualW, flux_dualE
 
-  j = 3
+  ! set all matrix variables (dW, dE, fW, fE, rj, smG) to 0.0
+  dW = 0.0
+  dE = 0.0
+  fW = 0.0
+  fE = 0.0
+  rj = 0.0
+  smG = 0.0
+
+  j = 3   ! this needs to be deleted
 
   alphaW = delx(j-1)/(delx(j-1)+delx(j))
   alphaE = delx(j)/(delx(j+1)+delx(j))
@@ -2004,20 +2024,29 @@ subroutine auto_fill
     dcdxE(ic) = betaE * (cprev(ic,j+1) - cprev(ic,j))
   end do
 
-  ! convert cW, cE, dcdxW, dcdxE to DUAL_NUM
-  do ic = 1,N
-    dx_array = dx_array * 0.0
-    dx_array(ic) = 1.0
-    c_dual(ic) = DUAL(cW(ic), dx_array)
-    write(*,*) ic, c_dual(ic)
+  ! WEST SIDE
+  c_dual = c_to_dual(cW)
+  dcdx_dual = dcdx_to_dual(dcdxW)
+  flux_dualW = FLUX(c_dual, dcdx_dual)
+  ! EAST SIDE
+  c_dual = c_to_dual(cE)
+  dcdx_dual = dcdx_to_dual(dcdxE)
+  flux_dualE = FLUX(c_dual, dcdx_dual)
+  ! Control Volume Terms
+  c_dual = c_to_dual(cprev(:,j))
+  ! reaction = RXN(c_dual)
+  ! accumulation = ACCUM(c_dual)
 
-    dx_array = dx_array * 0.0
-    dx_array(N + ic) = 1.0
-    dcdx_dual(ic) = DUAL(dcdxW(ic), dx_array)
-    write(*,*) ic, dcdx_dual(ic)
-  end do
 
-  write(*,*) FLUX(cW, dcdxW)
+
+  write(*,*) cW
+  write(*,*) c_dual(1)
+  write(*,*) c_dual(2)
+  write(*,*) dcdx_dual(1)
+  write(*,*) dcdx_dual(2)
+  write(*,*) "FLUX"
+  write(*,*) flux_dualW(1)
+  write(*,*) flux_dualW(2)
 
 end subroutine auto_fill
 

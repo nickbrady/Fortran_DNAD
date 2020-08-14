@@ -7,7 +7,7 @@
 module user_input
   integer, PARAMETER :: N = 2
   integer, PARAMETER :: NJ = 42                           ! Number of mesh points
-  integer, PARAMETER :: Numbertimesteps = 3.6d3*40       ! Number of time steps
+  integer, PARAMETER :: Numbertimesteps = 3.6d3*10       ! Number of time steps
   real               :: delT = 1.0                        ! delta t (size of timestep) [s]
   real               :: time                              ! [s]
 
@@ -19,7 +19,7 @@ module user_input
 
   ! **************************** Physical Parameters ****************************
   real :: diff  = 1.0e-4
-  real :: k_rxn = -1.0e-4
+  real :: k_rxn = -1.0e-3
 
   real :: xmax  = 1.0            ! Electrode Thickness (cm) [1 um = 1d-4 cm]
   real :: cbulk = 1.0          ! Electrolyte Concentration [mol/cm3]
@@ -1868,7 +1868,7 @@ CONTAINS
 
   subroutine write_condition(it)
     real :: last_write_time = 0.0
-    real :: write_every_x_sec = 3600.0           ! 3600 s = 1 hour
+    real :: write_every_x_sec = 3600.0/10.0           ! 3600 s = 1 hour
 
     if (it == 1) then
       call write_to_screen(it)
@@ -2059,6 +2059,15 @@ CONTAINS
     end do
 
   END FUNCTION dcdx_to_dual
+
+
+  FUNCTION Control_Volume(Geometry) RESULT(ctrl_vol)
+    real, dimension(NJ) :: ctrl_vol
+    character(:) :: Geometry
+
+    print*, Geometry
+
+  END FUNCTION Control_Volume
   ! ----------------------------------------------------------------------------
   ! ****************************************************************************
 
@@ -2277,9 +2286,9 @@ subroutine auto_fill(j)
         dW(ic, i) = flux_dualW(ic)%dx(N+i)
         dE(ic, i) = flux_dualE(ic)%dx(N+i)
 
-        rj(ic, i) = reaction_dual(ic)%dx(i) - accumulation_dual(ic)%dx(i)
+        rj(ic, i) = (reaction_dual(ic)%dx(i) - accumulation_dual(ic)%dx(i))*delX(j)
       end do
-      smG(ic) = -(flux_dualW(ic)%x - flux_dualE(ic)%x + reaction_dual(ic)%x)
+      smG(ic) = -(flux_dualW(ic)%x - flux_dualE(ic)%x + reaction_dual(ic)%x * delX(j))
     end do
   end if
 

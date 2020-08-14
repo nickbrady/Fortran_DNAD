@@ -1,3 +1,35 @@
+! * Written by Nicholas Brady August 10, 2020
+! Uses John Newman's Band algorithm to solve coupled non-linear partial
+! differential equations
+! Incorporates DNAD which anables to use of automatic Differentiation to
+! linearize the PDE's
+
+module user_input
+  integer, PARAMETER :: N = 2
+  integer, PARAMETER :: NJ = 42                           ! Number of mesh points
+  integer, PARAMETER :: Numbertimesteps = 3.6d3*40       ! Number of time steps
+  real               :: delT = 1.0                        ! delta t (size of timestep) [s]
+  real               :: time                              ! [s]
+
+  ! **************************** Physical Constants ****************************
+  real :: Rigc = 8.314                     ! Ideal gas constant [J/(mol*K)]
+  real :: Temp = 298                       ! Temperature [K]
+  real :: Fconst = 96485                   ! Faraday's Constant [C/mol]
+  real :: PI = 4.0D0*ATAN(1.0D0)           ! pi - Geometric constant
+
+  ! **************************** Physical Parameters ****************************
+  real :: diff  = 1.0
+  real :: k_rxn = 0.0
+
+  real :: xmax  = 1.0            ! Electrode Thickness (cm) [1 um = 1d-4 cm]
+  real :: cbulk = 1.0          ! Electrolyte Concentration [mol/cm3]
+
+  CHARACTER(LEN=1) :: state = 'D'
+
+end module user_input
+
+
+
 !******************************************************************************
 !* Dual Number Automatic Differentiation (DNAD) of Fortran Codes
 !*-----------------------------------------------------------------------------
@@ -100,30 +132,8 @@
 ! #define ndv 1
 ! #endif
 
-module user_input
-  integer, PARAMETER :: N = 2
-  integer, PARAMETER :: NJ = 12                           ! Number of mesh points
-  integer, PARAMETER :: Numbertimesteps = 3.6d3*201       ! Number of time steps
-  real               :: delT = 1.0                        ! delta t (size of timestep) [s]
-  real               :: time                              ! [s]
-
-  ! **************************** Physical Constants ****************************
-  real :: Rigc = 8.314                     ! Ideal gas constant [J/(mol*K)]
-  real :: Temp = 298                       ! Temperature [K]
-  real :: Fconst = 96485                   ! Faraday's Constant [C/mol]
-  real :: PI = 4.0D0*ATAN(1.0D0)           ! pi - Geometric constant
-
-  ! **************************** Physical Parameters ****************************
-  real :: diff = 1.0e-6
-  real :: k_rxn = 1.0
-
-  real :: xmax  = 1.0            ! Electrode Thickness (cm) [1 um = 1d-4 cm]
-  real :: cbulk = 1.0e-3          ! Electrolyte Concentration [mol/cm3]
-
-end module user_input
-
-
 module dnadmod
+
     use user_input, only: N
     implicit none
 
@@ -1841,13 +1851,102 @@ contains
     end function set_NaN
 
 end module dnadmod
-
+! ******************************************************************************
+! ******************************************************************************
 
 
 ! ******************************************************************************
-! ************************ Governing Equation Functions ************************
-! **************** Accumulation = FluxIn - FluxOut + Generation ****************
-! ******************************************************************************
+module write_data_mod
+  use user_input
+  use variables, only: cprev, delC
+
+  real :: c0, Phi_2, t_write
+  character(len=65) :: header_fmt, data_fmt
+
+
+CONTAINS
+
+  subroutine write_condition(it)
+    real :: last_write_time = 0.0
+    real :: write_every_x_sec = 3600.0           ! 3600 s = 1 hour
+
+    if (it == 1) then
+      call write_to_screen(it)
+      call write_positional_information_to_file(it)
+      last_write_time = time
+    else if ( (time - last_write_time).GE.write_every_x_sec ) then
+      call write_to_screen(it)
+      call write_positional_information_to_file(it)
+      last_write_time = time
+    end if
+  end subroutine write_condition
+
+
+
+  subroutine write_format
+    header_fmt = '(1(A5,1X), 2(A12,1X), 20(A15,1X)) '
+    data_fmt = '(1(A5,1X), 2(F12.5,1X), 20(ES15.5,1X))'
+  end subroutine write_format
+
+
+
+  subroutine write_to_screen(it)
+    call write_format
+
+    if (it.EQ.1) then       ! write the headers on the first entrance into write all voltage
+      write(*, header_fmt) 'State', 'Time', 'Solution_Pot', 'Conc_CC'
+      write(*, header_fmt) 'CDR',  'hours', 'Volts'       , 'mol/cm3'
+    end if
+
+    t_write=time/float(3600)
+
+    c0 = cprev(1,NJ)
+    Phi_2 = cprev(2,NJ)
+
+    write(*, data_fmt) state, t_write, Phi_2, c0
+
+  end subroutine write_to_screen
+
+
+
+  subroutine write_edge_information_to_file(it)
+    call write_format
+
+
+
+  end subroutine
+
+
+
+  subroutine write_positional_information_to_file(it)
+    use variables, only: xx
+    call write_format
+
+    open(56, file = 'Time_Voltage_Position.txt', status = 'unknown')
+
+    t_write=time/float(3600)
+
+    if (it.EQ.1) then
+!           write the headers on the first entrance into write all voltage
+        write(56, header_fmt) 'State', 'Time', 'Position', 'Solution_Pot', 'Conc'
+        write(56, header_fmt) 'CDR',  'hours', 'cm'      , 'Volts'       , 'mol/cm3'
+
+      end if
+
+      do j = 1,NJ
+          c0 = cprev(1,j)
+          Phi_2 = cprev(2,j)
+
+        write(56, data_fmt) state, t_write, xx(j), Phi_2, c0
+
+      end do
+
+  end subroutine
+
+end module write_data_mod
+
+
+
 MODULE GOV_EQNS
   use user_input
   use variables
@@ -1861,16 +1960,21 @@ MODULE GOV_EQNS
 
 CONTAINS
 
+! ******************************************************************************
+! **************************** GOVERNING EQUATIONS *****************************
+! **************** Accumulation = FluxIn - FluxOut + Generation ****************
+! ******************************************************************************
+! can define intermediate variables with the functions to improve readability
+! i.e c0 = c_vars_dual(1), dPhi2dx = dcdx_vars_dual(2)
+
   FUNCTION FLUX(c_vars_dual, dcdx_vars_dual) Result (Flux_)
     TYPE (DUAL), DIMENSION(N)               :: Flux_
     TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual, dcdx_vars_dual
-    ! can define intermediate variables to improve readability
-    ! i.e Phi_2 = c_vars_dual(2), dPhi2dx = dcdx_vars_dual(2)
 
     Flux_(1) = -diff * dcdx_vars_dual(1)
     Flux_(2) = c_vars_dual(1) * dcdx_vars_dual(2)
 
-  END FUNCTION
+  END FUNCTION FLUX
 
   FUNCTION RXN(c_vars_dual) Result (Rxn_)
     TYPE (DUAL), DIMENSION(N)               :: Rxn_
@@ -1879,7 +1983,7 @@ CONTAINS
     Rxn_(1) = k_rxn * c_vars_dual(1)**2.0
     Rxn_(2) = k_rxn * c_vars_dual(2)
 
-  END FUNCTION
+  END FUNCTION RXN
 
   FUNCTION ACCUM(c_vars_dual) Result (Accum_)
     TYPE (DUAL), DIMENSION(N)               :: Accum_
@@ -1888,7 +1992,33 @@ CONTAINS
     Accum_(1) = c_vars_dual(1)/delT       ! dc/dt
     Accum_(2) = 0.0
 
-  END FUNCTION
+  END FUNCTION ACCUM
+! ******************************************************************************
+
+
+! ******************************************************************************
+! **************************** BOUNDARY CONDITIONS *****************************
+! ******************************************************************************
+! boundary conditions need to be written as homogeneous equations
+! i.e. c = 1.0   -->   c - 1.0 = 0.0   -->   BC_WEST_(N) = c - 1.0
+  FUNCTION Boundary_WEST (c_vars_dual, dcdx_vars_dual) Result (BC_WEST_)
+    TYPE (DUAL), DIMENSION(N)               :: BC_WEST_
+    TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual, dcdx_vars_dual
+
+    BC_WEST_(1) = c_vars_dual(1) - 0.0
+    BC_WEST_(2) = c_vars_dual(2) - 0.0
+
+  END FUNCTION Boundary_WEST
+
+  FUNCTION Boundary_EAST (c_vars_dual, dcdx_vars_dual) Result (BC_EAST_)
+    TYPE (DUAL), DIMENSION(N)               :: BC_EAST_
+    TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual, dcdx_vars_dual
+
+    BC_EAST_(1) = c_vars_dual(1) - 1.0
+    BC_EAST_(2) = c_vars_dual(2) - 2.0
+
+  END FUNCTION Boundary_EAST
+! ******************************************************************************
 
 
   ! ****************************************************************************
@@ -1935,10 +2065,40 @@ MODULE variables
   use user_input
   implicit none
 
-  real, dimension(N,NJ) :: cprev, delC
-  real, dimension(NJ)   :: xx, delX
+
+  real, dimension(N, NJ)  :: cprev, delC
+  real, dimension(NJ)     :: xx, delX
+
+  ! ABDGXY_VARS
+  real, dimension(N, N)     :: A, B, X, Y
+  real, dimension(N, 2*N+1) :: D
+  real, dimension(N)        :: G
+
+  ! BAND and MATINV variables
+  real, dimension(N, N+1, NJ) :: E
+  real, dimension(N)          :: ID
+  integer :: NP1
 
 END MODULE variables
+
+
+! MODULE ABDGXY_VARS
+!   use user_input, only: N
+!   real, dimension(N, N)     :: A, B, X, Y
+!   real, dimension(N, 2*N+1) :: D
+!   real, dimension(N)        :: G
+!
+! END MODULE ABDGXY_VARS
+
+
+! MODULE BAND_J_VARS
+!   use user_input, only: N, NJ
+!   use variables, only: delC
+!   real, dimension(N, N+1, NJ) :: E
+!   real, dimension(N)          :: ID
+!
+!
+! END MODULE BAND_J_VARS
 
 
 
@@ -1949,9 +2109,11 @@ END MODULE variables
 
 PROGRAM unsteady
   use user_input
+  use variables, only : cprev, delC
+  use write_data_mod
   implicit none
   integer :: t1, t2, clock_rate, clock_max, it
-  integer i
+  integer i, k, j
 
 
   call system_clock(t1,clock_rate,clock_max)
@@ -1963,26 +2125,33 @@ PROGRAM unsteady
   ! delT = 1.0
 
 
-  ! do it=1,Numbertimesteps
+  do it=1,Numbertimesteps
   !
-  !       if (it.EQ.1) then
-  !         call write_data(it)
-  !
-  !       !if ((time - last_write_time).GE.(write_interval)) then
-  !       elseif ((time - last_write_time).GE.(write_interval)) then
-  !           last_write_time = time
-  !           call write_data(it)
-  !
-  !       end if
+    call write_condition(it)
   !
   !
-      call auto_fill
+  ! ****************************************************************************
+  ! ******************************** BOUND VAL *********************************
+  ! ****************************************************************************
+    do j = 1, NJ
+      call auto_fill(j)
+      call ABDGXY(j)
+      call BAND(j)
+    end do
+
+    ! Update the dependent variables
+    do k=1,n
+      do j=1,nj
+         cprev(k,j) = cprev(k,j) + delC(k,j)
+      end do
+    end do
+  ! ****************************************************************************
   !
   !   call bound_val_e(h)
   !
-  !       time=time+delT
+        time=time+delT
   !
-  ! end do
+  end do
   call system_clock(t2,clock_rate,clock_max)
   write ( *, * ) 'Elapsed real time =', real(t2-t1)/real(clock_rate )
 end program unsteady
@@ -1991,7 +2160,7 @@ end program unsteady
 ! ***************************** END MAIN PROGRAM *******************************
 ! ------------------------------------------------------------------------------
 
-subroutine auto_fill!(j)
+subroutine auto_fill(j)
   use user_input, only : N, NJ
   use GOV_EQNS
   use dnadmod
@@ -2010,6 +2179,7 @@ subroutine auto_fill!(j)
   ! DUAL variables
   TYPE(DUAL), dimension(N) :: c_dual, dcdx_dual
   TYPE(DUAL), dimension(N) :: flux_dualW, flux_dualE, reaction_dual, accumulation_dual
+  TYPE(DUAL), dimension(N) :: boundary_conditionW, boundary_conditionE
 
   ! set all matrix variables (dW, dE, fW, fE, rj, smG) to 0.0
   dW = 0.0
@@ -2019,7 +2189,7 @@ subroutine auto_fill!(j)
   rj = 0.0
   smG = 0.0
 
-  j = 3   ! this needs to be deleted
+  ! j = 3   ! this needs to be deleted
 
   if (j /= 1) then ! if j not equal to 1, then define the west-side interface variables
     alphaW = delx(j-1)/(delx(j-1)+delx(j))
@@ -2054,9 +2224,35 @@ subroutine auto_fill!(j)
   end if
 
   ! Control Volume Terms
-  c_dual = c_to_dual(cprev(:,j))
-  reaction_dual = RXN(c_dual)
-  accumulation_dual = ACCUM(c_dual)
+  if ( (j /= 1).AND.(j /= NJ) ) then
+    c_dual = c_to_dual(cprev(:,j))
+    reaction_dual = RXN(c_dual)
+    accumulation_dual = ACCUM(c_dual)
+  end if
+
+  if (j == 1) then                ! WEST side boundary condition
+    c_dual = c_to_dual(cE)
+    dcdx_dual = dcdx_to_dual(dcdxE)
+    boundary_conditionW = Boundary_WEST(c_dual, dcdx_dual)
+    do ic = 1,N                   ! equation number
+      do i = 1,N                  ! specie number
+        fE(ic, i) = boundary_conditionW(ic)%dx(i)
+        dE(ic, i) = boundary_conditionW(ic)%dx(N+i)
+      end do
+      smG(ic) = -(-boundary_conditionW(ic)%x)
+    end do
+
+  else if (j == NJ) then          ! EAST side boundary condition
+    c_dual = c_to_dual(cW)
+    dcdx_dual = dcdx_to_dual(dcdxW)
+    boundary_conditionE = Boundary_EAST(c_dual, dcdx_dual)
+    do ic = 1,N                   ! equation number
+      do i = 1,N                  ! specie number
+        fW(ic, i) = boundary_conditionE(ic)%dx(i)
+        dW(ic, i) = boundary_conditionE(ic)%dx(N+i)
+      end do
+      smG(ic) = -(boundary_conditionE(ic)%x)
+    end do
 
   ! ****************************************************************************
   ! ACCUM = IN - OUT + GEN
@@ -2065,7 +2261,8 @@ subroutine auto_fill!(j)
   ! dACCUM = (IN_ + dIN) - (OUT_ + dOUT) + (GEN_ + dGEN)            ACCUM_ = 0.
   ! dIN - dOUT + dGEN - dACCUM = -(In_ - OUT_ - GEN_)
   ! ****************************************************************************
-  if ( (j /= 1).AND.(j /= NJ) ) then
+
+  else                                      ! if ( (j /= 1).AND.(j /= NJ) ) then
     ! loop to fill in the fillmat matrices: (dW, dE, fW, fE, rj, smG)
     do ic = 1,N                   ! equation number
       do i = 1,N                  ! specie number
@@ -2190,163 +2387,176 @@ end subroutine initial_condition
 !
 ! !************************************ABDGXY******************************************
 !
-! subroutine ABDGXY(h,j)
-!       use user_input
-!       use variables
-!       implicit double precision(a-h,o-z)
-!
-!       if(j.eq.1) then
-!           do 1 ii=1,n
-!           do 10 kk=1,n
-!              X(ii,kk)=0.d0
-!              B(ii,kk)=rj(ii,kk) - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
-!              D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
-!
-! 10         continue
-!              G(ii)=smG(ii)
-! 1        continue
-!           return
-!       end if
-!       if (j.eq.NJ) then
-!           do 2 ii=1,n
-!           do 20 kk=1,n
-!              Y(ii,kk)=0.d0
-!              A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
-!              B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk)
-! 20         continue
-!              G(ii)=smG(ii)
-! 2         continue
-!           return
-!       end if
-!       do 3 ii=1,n
-!       do 30 kk=1,n
-!              A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
-!              B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk) &
-!              &        - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
-!              D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
-! 30     continue
-!              G(ii)=smG(ii)
-! 3     continue
-!       return
-! end subroutine ABDGXY
+subroutine ABDGXY(j)
+      use user_input, only: N, NJ
+      ! use variables
+      use GOV_EQNS
+      ! use ABDGXY_VARS
+      use variables
+      ! implicit double precision(a-h,o-z)
+      implicit none
+      integer :: j, ii, kk
+
+
+      if(j.eq.1) then
+          do 1 ii=1,n
+          do 10 kk=1,n
+             X(ii,kk)=0.d0
+             B(ii,kk)=rj(ii,kk) - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
+             D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
+
+10         continue
+             G(ii)=smG(ii)
+1        continue
+          return
+      end if
+      if (j.eq.NJ) then
+          do 2 ii=1,n
+          do 20 kk=1,n
+             Y(ii,kk)=0.d0
+             A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
+             B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk)
+20         continue
+             G(ii)=smG(ii)
+2         continue
+          return
+      end if
+      do 3 ii=1,n
+      do 30 kk=1,n
+             A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
+             B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk) &
+             &        - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
+             D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
+30     continue
+             G(ii)=smG(ii)
+3     continue
+      return
+end subroutine ABDGXY
 !
 ! !***********************************MATINV*****************************************
 !
-! SUBROUTINE MATINV(N,M,DETERM)
-!  use variables, only: A,B,delC,D,ID ! A imported but not used
-!  implicit double precision (A-H,O-Z)
-!
-!       DETERM=1.0
-!       DO 1 I=1,N
-! 1     ID(I)=0
-!       DO 18 NN=1,N
-!       BMAX=1.1
-!       DO 6 I=1,N
-!       IF (ID(I).NE.0) GOTO 6
-!       BNEXT=0.0
-!       BTRY=0.0
-!       DO 5 J=1,N
-!       IF (ID(J).NE.0) GOTO 5
-!       IF (DABS(B(I,J)).LE.BNEXT) GOTO 5
-!       BNEXT=DABS(B(I,J))
-!       IF (BNEXT.LE.BTRY) GOTO 5
-!       BNEXT=BTRY
-!       BTRY=DABS(B(I,J))
-!       JC=J
-! 5     CONTINUE
-!       IF (BNEXT.GE.BMAX*BTRY) GOTO 6
-!       BMAX=BNEXT/BTRY
-!       IROW=I
-!       JCOL=JC
-! 6     CONTINUE
-!       IF (ID(JC).EQ.0) GOTO 8
-!       DETERM=0.0
-!       RETURN
-! 8     ID(JCOL)=1
-!       IF (JCOL.EQ.IROW) GOTO 12
-! 9     DO 10 J=1,N
-!       SAVE=B(IROW,J)
-!       B(IROW,J)=B(JCOL,J)
-! 10    B(JCOL,J)=SAVE
-!       DO 11 K=1,M
-!       SAVE=D(IROW,K)
-!       D(IROW,K)=D(JCOL,K)
-! 11    D(JCOL,K)=SAVE
-! 12    F=1.0/B(JCOL,JCOL)
-!       DO 13 J=1,N
-! 13    B(JCOL,J)=B(JCOL,J)*F
-!       DO 14 K=1,M
-! 14    D(JCOL,K)=D(JCOL,K)*F
-!       DO 18 I=1,N
-!       IF (I.EQ.JCOL) GOTO 18
-!       F=B(I,JCOL)
-!       DO 16 J=1,N
-! 16    B(I,J)=B(I,J)-F*B(JCOL,J)
-!       DO 17 K=1,M
-! 17    D(I,K)=D(I,K)-F*D(JCOL,K)
-! 18    CONTINUE
-!       RETURN
-!       END
+SUBROUTINE MATINV(N,M,DETERM)
+  use variables, only: A,B,delC,D,ID ! A imported but not used
+  implicit double precision (A-H,O-Z)
+ ! use variables, only: delC ! A imported but not used
+ ! use ABDGXY_VARS, only: A, B, D
+ ! implicit double precision (A-H,O-Z)
+ ! real, dimension(N) :: ID
+
+      DETERM=1.0
+      DO 1 I=1,N
+1     ID(I)=0
+      DO 18 NN=1,N
+      BMAX=1.1
+      DO 6 I=1,N
+      IF (ID(I).NE.0) GOTO 6
+      BNEXT=0.0
+      BTRY=0.0
+      DO 5 J=1,N
+      IF (ID(J).NE.0) GOTO 5
+      IF (ABS(B(I,J)).LE.BNEXT) GOTO 5
+      BNEXT=ABS(B(I,J))
+      IF (BNEXT.LE.BTRY) GOTO 5
+      BNEXT=BTRY
+      BTRY=ABS(B(I,J))
+      JC=J
+5     CONTINUE
+      IF (BNEXT.GE.BMAX*BTRY) GOTO 6
+      BMAX=BNEXT/BTRY
+      IROW=I
+      JCOL=JC
+6     CONTINUE
+      IF (ID(JC).EQ.0) GOTO 8
+      DETERM=0.0
+      RETURN
+8     ID(JCOL)=1
+      IF (JCOL.EQ.IROW) GOTO 12
+9     DO 10 J=1,N
+      SAVE=B(IROW,J)
+      B(IROW,J)=B(JCOL,J)
+10    B(JCOL,J)=SAVE
+      DO 11 K=1,M
+      SAVE=D(IROW,K)
+      D(IROW,K)=D(JCOL,K)
+11    D(JCOL,K)=SAVE
+12    F=1.0/B(JCOL,JCOL)
+      DO 13 J=1,N
+13    B(JCOL,J)=B(JCOL,J)*F
+      DO 14 K=1,M
+14    D(JCOL,K)=D(JCOL,K)*F
+      DO 18 I=1,N
+      IF (I.EQ.JCOL) GOTO 18
+      F=B(I,JCOL)
+      DO 16 J=1,N
+16    B(I,J)=B(I,J)-F*B(JCOL,J)
+      DO 17 K=1,M
+17    D(I,K)=D(I,K)-F*D(JCOL,K)
+18    CONTINUE
+      RETURN
+      END
 !
 ! !*************************************BAND******************************************
 !
-! SUBROUTINE BAND(J)
-! use variables, only: A,B,delC,D,G,X,Y,NP1,E
-! use user_input, only: N,NJ
-! implicit double precision (A-H,O-Z)
-!
-!
-! 101   FORMAT(15H DETERM=0 AT J=,I4)
-!       IF (J-2) 1,6,8
-! 1     NP1=N+1
-!       DO 2 I=1,N
-!       D(I,2*N+1)=G(I)
-!       DO 2 L=1,N
-!       LPN=L+N
-! 2     D(I,LPN)=X(I,L)
-!       CALL MATINV(N,2*N+1,DETERM)
-!       IF (DETERM) 4,3,4
-! 3     PRINT 101,J
-! 4     DO 5 K=1,N
-!       E(K,NP1,1)=D(K,2*N+1)
-!       DO 5 L=1,N
-!       E(K,L,1)=-D(K,L)
-!       LPN=L+N
-! 5     X(K,L)=-D(K,LPN)
-!       RETURN
-! 6     DO 7 I=1,N
-!       DO 7 K=1,N
-!       DO 7 L=1,N
-! 7     D(I,K)=D(I,K)+A(I,L)*X(L,K)
-! 8     IF (J-NJ) 11,9,9
-! 9     DO 10 I=1,N
-!       DO 10 L=1,N
-!       G(I)=G(I)-Y(I,L)*E(L,NP1,J-2)
-!       DO 10 M=1,N
-! 10    A(I,L)=A(I,L) + Y(I,M)*E(M,L,J-2)
-! 11    DO 12 I=1,N
-!       D(I,NP1)=-G(I)
-!       DO 12 L=1,N
-!       D(I,NP1)=D(I,NP1)+A(I,L)*E(L,NP1,J-1)
-!       DO 12 K=1,N
-! 12    B(I,K)=B(I,K) + A(I,L)*E(L,K,J-1)
-!       CALL MATINV(N,NP1,DETERM)
-!       IF (DETERM) 14,13,14
-! 13    PRINT 101,J
-! 14    DO 15 K=1,N
-!       DO 15 M=1,NP1
-! 15    E(K,M,J)=-D(K,M)
-!       IF (J-NJ) 20,16,16
-! 16    DO 17 K=1,N
-! 17    delC(K,J)=E(K,NP1,J)
-!       DO 18 JJ=2,NJ
-!       M=NJ-JJ+1
-!       DO 18 K=1,N
-!       delC(K,M)=E(K,NP1,M)
-!       DO 18 L=1,N
-! 18    delC(K,M)=delC(K,M) +E(K,L,M)*delC(L,M+1)
-!       DO 19 L=1,N
-!       DO 19 K=1,N
-! 19    delC(K,1)=delC(K,1)+X(K,L)*delC(L,3)
-! 20    RETURN
-!       END
+SUBROUTINE BAND(J)
+use variables, only: A, B, delC, D, G, X, Y, NP1, E
+! use variables, only: delC
+use user_input, only: N, NJ
+! use ABDGXY_VARS
+! use BAND_J_VARS
+implicit double precision (A-H,O-Z)
+! integer :: NP1
+
+101   FORMAT(15H DETERM=0 AT J=,I4)
+      IF (J-2) 1,6,8
+1     NP1=N+1
+      DO 2 I=1,N
+      D(I,2*N+1)=G(I)
+      DO 2 L=1,N
+      LPN=L+N
+2     D(I,LPN)=X(I,L)
+      CALL MATINV(N,2*N+1,DETERM)
+      IF (DETERM) 4,3,4
+3     PRINT 101,J
+4     DO 5 K=1,N
+      E(K,NP1,1)=D(K,2*N+1)
+      DO 5 L=1,N
+      E(K,L,1)=-D(K,L)
+      LPN=L+N
+5     X(K,L)=-D(K,LPN)
+      RETURN
+6     DO 7 I=1,N
+      DO 7 K=1,N
+      DO 7 L=1,N
+7     D(I,K)=D(I,K)+A(I,L)*X(L,K)
+8     IF (J-NJ) 11,9,9
+9     DO 10 I=1,N
+      DO 10 L=1,N
+      G(I)=G(I)-Y(I,L)*E(L,NP1,J-2)
+      DO 10 M=1,N
+10    A(I,L)=A(I,L) + Y(I,M)*E(M,L,J-2)
+11    DO 12 I=1,N
+      D(I,NP1)=-G(I)
+      DO 12 L=1,N
+      D(I,NP1)=D(I,NP1)+A(I,L)*E(L,NP1,J-1)
+      DO 12 K=1,N
+12    B(I,K)=B(I,K) + A(I,L)*E(L,K,J-1)
+      CALL MATINV(N,NP1,DETERM)
+      IF (DETERM) 14,13,14
+13    PRINT 101,J
+14    DO 15 K=1,N
+      DO 15 M=1,NP1
+15    E(K,M,J)=-D(K,M)
+      IF (J-NJ) 20,16,16
+16    DO 17 K=1,N
+17    delC(K,J)=E(K,NP1,J)
+      DO 18 JJ=2,NJ
+      M=NJ-JJ+1
+      DO 18 K=1,N
+      delC(K,M)=E(K,NP1,M)
+      DO 18 L=1,N
+18    delC(K,M)=delC(K,M) +E(K,L,M)*delC(L,M+1)
+      DO 19 L=1,N
+      DO 19 K=1,N
+19    delC(K,1)=delC(K,1)+X(K,L)*delC(L,3)
+20    RETURN
+      END

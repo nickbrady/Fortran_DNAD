@@ -18,8 +18,8 @@ module user_input
   real :: PI = 4.0D0*ATAN(1.0D0)           ! pi - Geometric constant
 
   ! **************************** Physical Parameters ****************************
-  real :: diff  = 1.0
-  real :: k_rxn = 0.0
+  real :: diff  = 1.0e-4
+  real :: k_rxn = -1.0e-4
 
   real :: xmax  = 1.0            ! Electrode Thickness (cm) [1 um = 1d-4 cm]
   real :: cbulk = 1.0          ! Electrolyte Concentration [mol/cm3]
@@ -1900,7 +1900,7 @@ CONTAINS
 
     t_write=time/float(3600)
 
-    c0 = cprev(1,NJ)
+    c0 = cprev(1,1)
     Phi_2 = cprev(2,NJ)
 
     write(*, data_fmt) state, t_write, Phi_2, c0
@@ -2001,11 +2001,15 @@ CONTAINS
 ! ******************************************************************************
 ! boundary conditions need to be written as homogeneous equations
 ! i.e. c = 1.0   -->   c - 1.0 = 0.0   -->   BC_WEST_(N) = c - 1.0
+! i.e. flux = 1.0   -->   flux - 1.0 = 0.0   -->   BC_WEST_(N) = flux - 1.0
   FUNCTION Boundary_WEST (c_vars_dual, dcdx_vars_dual) Result (BC_WEST_)
     TYPE (DUAL), DIMENSION(N)               :: BC_WEST_
     TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual, dcdx_vars_dual
+    TYPE (DUAL), dimension(N)               :: flux_temp
+    flux_temp = FLUX(c_vars_dual, dcdx_vars_dual)
 
-    BC_WEST_(1) = c_vars_dual(1) - 0.0
+    ! BC_WEST_(1) = c_vars_dual(1) - 1.0e-3
+    BC_WEST_(1) = flux_temp(1) - 0.0
     BC_WEST_(2) = c_vars_dual(2) - 0.0
 
   END FUNCTION Boundary_WEST
@@ -2013,6 +2017,8 @@ CONTAINS
   FUNCTION Boundary_EAST (c_vars_dual, dcdx_vars_dual) Result (BC_EAST_)
     TYPE (DUAL), DIMENSION(N)               :: BC_EAST_
     TYPE (DUAL), dimension(N), INTENT (IN)  :: c_vars_dual, dcdx_vars_dual
+    TYPE (DUAL), dimension(N)               :: flux_temp
+    flux_temp = FLUX(c_vars_dual, dcdx_vars_dual)
 
     BC_EAST_(1) = c_vars_dual(1) - 1.0
     BC_EAST_(2) = c_vars_dual(2) - 2.0
@@ -2276,9 +2282,6 @@ subroutine auto_fill(j)
       smG(ic) = -(flux_dualW(ic)%x - flux_dualE(ic)%x + reaction_dual(ic)%x)
     end do
   end if
-
-  ! write(*,*) rj
-  ! write(*,*) accumulation_dual(1)
 
 end subroutine auto_fill
 

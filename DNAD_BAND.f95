@@ -2401,45 +2401,46 @@ subroutine ABDGXY(j)
       integer :: j, ii, kk
 
 
-      if(j.eq.1) then
-          do 1 ii=1,n
-          do 10 kk=1,n
-             X(ii,kk)=0.d0
-             B(ii,kk)=rj(ii,kk) - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
-             D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
+      if (j.eq.1) then
+          do ii=1,n
+            do kk=1,n
+               X(ii,kk)=0.d0
+               B(ii,kk)=rj(ii,kk) - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
+               D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
+            end do
+            G(ii)=smG(ii)
+          end do
+          return
+      end if
 
-10         continue
-             G(ii)=smG(ii)
-1        continue
-          return
-      end if
       if (j.eq.NJ) then
-          do 2 ii=1,n
-          do 20 kk=1,n
-             Y(ii,kk)=0.d0
-             A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
-             B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk)
-20         continue
-             G(ii)=smG(ii)
-2         continue
+          do ii=1,n
+            do kk=1,n
+               Y(ii,kk)=0.d0
+               A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
+               B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk)
+            end do
+            G(ii)=smG(ii)
+          end do
           return
       end if
-      do 3 ii=1,n
-      do 30 kk=1,n
-             A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
-             B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk) &
-             &        - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
-             D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
-30     continue
-             G(ii)=smG(ii)
-3     continue
+
+      do ii=1,n
+        do kk=1,n
+               A(ii,kk)=(1.d0 - alphaW)*fW(ii,kk) - betaW*dW(ii,kk)
+               B(ii,kk)=rj(ii,kk) + betaW*dW(ii,kk) + alphaW*fW(ii,kk) &
+               &        - (1.d0 - alphaE)*fE(ii,kk) + betaE*dE(ii,kk)
+               D(ii,kk)= -alphaE*fE(ii,kk) - betaE*dE(ii,kk)
+        end do
+        G(ii)=smG(ii)
+      end do
       return
 end subroutine ABDGXY
 !
 ! !***********************************MATINV*****************************************
 !
-SUBROUTINE MATINV(N,M,DETERM)
-  use variables, only: A,B,delC,D,ID ! A imported but not used
+SUBROUTINE MATINV(N, M, DETERM)
+  use variables, only: A, B, delC, D, ID ! A imported but not used
   implicit double precision (A-H,O-Z)
  ! use variables, only: delC ! A imported but not used
  ! use ABDGXY_VARS, only: A, B, D

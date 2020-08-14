@@ -2392,11 +2392,9 @@ end subroutine initial_condition
 !
 subroutine ABDGXY(j)
       use user_input, only: N, NJ
-      ! use variables
       use GOV_EQNS
-      ! use ABDGXY_VARS
-      use variables
-      ! implicit double precision(a-h,o-z)
+      use variables, only: A, B, D, G, X, Y ! This needs to be paired down just ot the essentials
+      ! use ABDGXY_VARS - A, B, D, G, X, Y
       implicit none
       integer :: j, ii, kk
 
@@ -2441,7 +2439,7 @@ end subroutine ABDGXY
 !
 SUBROUTINE MATINV(N, M, DETERM)
   use variables, only: A, B, delC, D, ID ! A imported but not used
-  implicit double precision (A-H,O-Z)
+  implicit double precision (A-H,O-Z) ! implicits are not good coding practice
  ! use variables, only: delC ! A imported but not used
  ! use ABDGXY_VARS, only: A, B, D
  ! implicit double precision (A-H,O-Z)

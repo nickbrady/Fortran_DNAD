@@ -1864,7 +1864,9 @@ module write_data_mod
   use variables, only: cprev, delC
 
   real :: c0, Phi_2, t_write
-  character(len=65) :: header_fmt, data_fmt
+
+  character(len=65) :: header_fmt = '(1(A5,1X), 2(A12,1X), 20(A15,1X)) '
+  character(len=65) :: data_fmt = '(1(A5,1X), 2(F12.5,1X), 20(ES15.5,1X))'
 
 
 CONTAINS
@@ -1885,16 +1887,8 @@ CONTAINS
   end subroutine write_condition
 
 
-
-  subroutine write_format
-    header_fmt = '(1(A5,1X), 2(A12,1X), 20(A15,1X)) '
-    data_fmt = '(1(A5,1X), 2(F12.5,1X), 20(ES15.5,1X))'
-  end subroutine write_format
-
-
-
   subroutine write_to_screen(it)
-    call write_format
+
 
     if (it.EQ.1) then       ! write the headers on the first entrance into write all voltage
       write(*, header_fmt) 'State', 'Time', 'Solution_Pot', 'Conc_CC'
@@ -1913,7 +1907,7 @@ CONTAINS
 
 
   subroutine write_edge_information_to_file(it)
-    call write_format
+
 
 
 
@@ -1923,7 +1917,7 @@ CONTAINS
 
   subroutine write_positional_information_to_file(it)
     use variables, only: xx
-    call write_format
+
 
     open(56, file = 'Time_Voltage_Position.txt', status = 'unknown')
 
@@ -2391,12 +2385,12 @@ subroutine auto_fill(j)
   ! dIN - dOUT + dGEN - dACCUM = -(In_ - OUT_ - GEN_)
   ! ****************************************************************************
 
-  else                                      ! if ( (j /= 1).AND.(j /= NJ) ) then
+  else                                        ! if ( (j /= 1).AND.(j /= NJ) ) then
     ! loop to fill in the fillmat matrices: (dW, dE, fW, fE, rj, smG)
     do ic = 1,N                               ! equation number
       do i = 1,N                              ! specie number
-        fW(ic, i) = flux_dualW(ic)%dx(i) * Crx_Area(1,j)
-        fE(ic, i) = flux_dualE(ic)%dx(i) * Crx_Area(2,j)
+        fW(ic, i) = flux_dualW(ic)%dx(i)   * Crx_Area(1,j)
+        fE(ic, i) = flux_dualE(ic)%dx(i)   * Crx_Area(2,j)
         dW(ic, i) = flux_dualW(ic)%dx(N+i) * Crx_Area(1,j)
         dE(ic, i) = flux_dualE(ic)%dx(N+i) * Crx_Area(2,j)
 

@@ -26,6 +26,9 @@ module user_input
 
   CHARACTER(LEN=1) :: state = 'D'
 
+  ! define the system Geometry :
+  character(len=65) :: geometry = 'Spherical'   ! Rectangular, Cylindrical, Spherical
+
 end module user_input
 
 
@@ -1957,6 +1960,8 @@ MODULE GOV_EQNS
   real                  :: alphaW, alphaE, betaW, betaE
   real, DIMENSION(N,N)  :: dW, dE, fW, fE, rj
   real, DIMENSION(N)    :: smG
+  real, DIMENSION(NJ)   :: Cntrl_Vol
+  real, DIMENSION(2, NJ):: Crx_Area
 
 CONTAINS
 
@@ -2059,18 +2064,67 @@ CONTAINS
     end do
 
   END FUNCTION dcdx_to_dual
+! ******************************************************************************
 
 
+  ! ****************************************************************************
+  ! ** Functions to define the node control volumes and cross-sectional area ***
+  ! ----------------------------------------------------------------------------
   FUNCTION Control_Volume(Geometry) RESULT(ctrl_vol)
+    use variables, only: xx, delX
     real, dimension(NJ) :: ctrl_vol
-    character(:) :: Geometry
+    character(len=:), allocatable, Intent(IN) :: Geometry
+    integer :: j
 
     print*, Geometry
+    ctrl_vol(1) = 0.0
+    ctrl_vol(NJ) = 0.0
+
+    if (Geometry == 'Rectangular') then
+      do j = 2, NJ-1
+        ctrl_vol(j) = delX(j)
+      end do
+
+    else if (Geometry == 'Cylindrical') then
+      do j = 2, NJ-1
+        ctrl_vol(j) = PI*( (xx(j) + delX(j)/2.0)**2 - (xx(j) - delX(j)/2.0)**2 )
+      end do
+
+    else if (Geometry == 'Spherical') then
+      do j = 2, NJ-1
+        ctrl_vol(j) = 4.0/3.0*PI*( (xx(j) + delX(j)/2.0)**3 - (xx(j) - delX(j)/2.0)**3 )
+      end do
+
+    end if
 
   END FUNCTION Control_Volume
-  ! ----------------------------------------------------------------------------
-  ! ****************************************************************************
 
+
+  FUNCTION Cross_Sectional_Area(Geometry) RESULT(Cross_Area)
+    use variables, only: xx, delX
+    real, dimension(2, NJ) :: Cross_Area      ! 1 - west side, 2 - east side
+    character(len=:), allocatable, Intent(IN) :: Geometry
+    integer :: j
+
+    if (Geometry == 'Rectangular') then
+      Cross_Area = 1.0
+
+    else if (Geometry == 'Cylindrical') then
+      do j = 1, NJ
+        Cross_Area(1,j) = 2.0 * PI * (xx(j) - delX(j)/2.0)
+        Cross_Area(2,j) = 2.0 * PI * (xx(j) + delX(j)/2.0)
+      end do
+
+    else if (Geometry == 'Spherical') then
+      do j = 1, NJ
+        Cross_Area(1,j) = 4.0 * PI * (xx(j) - delX(j)/2.0)**2.0
+        Cross_Area(2,j) = 4.0 * PI * (xx(j) + delX(j)/2.0)**2.0
+      end do
+
+    end if
+
+  END FUNCTION Cross_Sectional_Area
+! ******************************************************************************
 
 END MODULE GOV_EQNS
 
@@ -2126,9 +2180,12 @@ PROGRAM unsteady
   use user_input
   use variables, only : cprev, delC
   use write_data_mod
+
   implicit none
   integer :: t1, t2, clock_rate, clock_max, it
   integer i, k, j
+
+
 
 
   call system_clock(t1,clock_rate,clock_max)
@@ -2136,44 +2193,106 @@ PROGRAM unsteady
 
 
 
-  ! write_interval = 3600.0 ! seconds
-  ! delT = 1.0
+
+
+
 
 
   do it=1,Numbertimesteps
   !
     call write_condition(it)
-  !
-  !
+                                      ! Function to dynamically and integlligently
+                                      ! change delT
   ! ****************************************************************************
   ! ******************************** BOUND VAL *********************************
   ! ****************************************************************************
     do j = 1, NJ
-      call auto_fill(j)
-      call ABDGXY(j)
-      call BAND(j)
+      call auto_fill(j)               ! These can be changed to functions
+      call ABDGXY(j)                  ! because they each have a set of inputs
+      call BAND(j)                    ! and a set of outputs
     end do
 
-    ! Update the dependent variables
-    do k=1,n
+    do k=1,n                          ! Update the dependent variables
       do j=1,nj
          cprev(k,j) = cprev(k,j) + delC(k,j)
       end do
     end do
   ! ****************************************************************************
-  !
-  !   call bound_val_e(h)
-  !
-        time=time+delT
-  !
+
+    time = time + delT                ! Update the time
+
   end do
+
   call system_clock(t2,clock_rate,clock_max)
   write ( *, * ) 'Elapsed real time =', real(t2-t1)/real(clock_rate )
+
 end program unsteady
 
 ! ------------------------------------------------------------------------------
 ! ***************************** END MAIN PROGRAM *******************************
 ! ------------------------------------------------------------------------------
+
+
+subroutine initial_condition()
+  use user_input
+  use variables
+  use GOV_EQNS, only: Control_Volume, Cross_Sectional_Area, Cntrl_Vol, Crx_Area
+
+  implicit none
+  real :: h
+  integer :: j
+
+  character(len=:), allocatable :: control_volume_input
+!************************************ Electrode ******************************************
+!************************************ Electrode ******************************************
+!************************************ Electrode ******************************************
+
+  h = xmax/float(nj-2)
+  do j=1,NJ
+
+    if (j.EQ.1) then
+      xx(j) = 0.0
+    else if (j.EQ.NJ) then
+      xx(NJ) = xmax
+    else
+      xx(j) = h*float(j-1) - h/2.0
+    end if
+
+  end do
+
+  do j=2, NJ-1
+     delx(j) = h
+  end do
+     delx(1) = 0.0                      ! it is common in the finite volume
+     delx(NJ) = 0.0                     ! algorithm to set the control
+                                        ! volumes at the boundaries to zero
+  do j=1,NJ
+    cprev(1,j) = cbulk
+    cprev(2,j) = 2.0 !Phi_1_init
+    ! cprev(3,j) = Phi_2_init
+    ! cprev(4,j) = cs_init
+  end do
+
+  control_volume_input = trim(geometry)                   ! Define the control volume
+  Cntrl_Vol = Control_Volume(control_volume_input)        ! size based on the
+  Crx_Area = Cross_Sectional_Area(control_volume_input)   ! specified system geometry
+
+  return                                ! is this necessary?
+end subroutine initial_condition
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 subroutine auto_fill(j)
   use user_input, only : N, NJ
@@ -2204,10 +2323,8 @@ subroutine auto_fill(j)
   rj = 0.0
   smG = 0.0
 
-  ! j = 3   ! this needs to be deleted
-
-  if (j /= 1) then ! if j not equal to 1, then define the west-side interface variables
-    alphaW = delx(j-1)/(delx(j-1)+delx(j))
+  if (j /= 1) then                          ! if j not equal to 1, then define
+    alphaW = delx(j-1)/(delx(j-1)+delx(j))  ! the west-side interface variables
     betaW = 2.0/(delx(j-1)+delx(j))
     do ic=1,N
       cW(ic)    = alphaW*cprev(ic,j) + (1.d0 - alphaW)*cprev(ic,j-1)
@@ -2215,8 +2332,8 @@ subroutine auto_fill(j)
     end do
   end if
 
-  if (j /= NJ) then ! if j not equal to 1, then define the west-side interface variables
-    alphaE = delx(j)/(delx(j+1)+delx(j))
+  if (j /= NJ) then                         ! if j not equal to NJ, then define
+    alphaE = delx(j)/(delx(j+1)+delx(j))    ! the east-side interface variables
     betaE = 2.0/(delx(j)+delx(j+1))
     do ic=1,N
       cE(ic)    = alphaE*cprev(ic,j+1) + (1.d0 - alphaE)*cprev(ic,j)
@@ -2224,45 +2341,42 @@ subroutine auto_fill(j)
     end do
   end if
 
-  ! WEST SIDE
-  if (j /= 1) then
+  if (j /= 1) then                          ! West Side Flux
     c_dual = c_to_dual(cW)
     dcdx_dual = dcdx_to_dual(dcdxW)
     flux_dualW = FLUX(c_dual, dcdx_dual)
   end if
 
-  ! EAST SIDE
-  if (j /= NJ) then
+  if (j /= NJ) then                         ! East Side Flux
     c_dual = c_to_dual(cE)
     dcdx_dual = dcdx_to_dual(dcdxE)
     flux_dualE = FLUX(c_dual, dcdx_dual)
   end if
 
-  ! Control Volume Terms
-  if ( (j /= 1).AND.(j /= NJ) ) then
+  if ( (j /= 1).AND.(j /= NJ) ) then        ! Control Volume Terms - Rxn, Accum
     c_dual = c_to_dual(cprev(:,j))
     reaction_dual = RXN(c_dual)
     accumulation_dual = ACCUM(c_dual)
   end if
 
-  if (j == 1) then                ! WEST side boundary condition
+  if (j == 1) then                          ! West side boundary conditions
     c_dual = c_to_dual(cE)
     dcdx_dual = dcdx_to_dual(dcdxE)
     boundary_conditionW = Boundary_WEST(c_dual, dcdx_dual)
-    do ic = 1,N                   ! equation number
-      do i = 1,N                  ! specie number
+    do ic = 1,N                             ! equation number
+      do i = 1,N                            ! specie number
         fE(ic, i) = boundary_conditionW(ic)%dx(i)
         dE(ic, i) = boundary_conditionW(ic)%dx(N+i)
       end do
       smG(ic) = -(-boundary_conditionW(ic)%x)
     end do
 
-  else if (j == NJ) then          ! EAST side boundary condition
+  else if (j == NJ) then                    ! East side boundary conditions
     c_dual = c_to_dual(cW)
     dcdx_dual = dcdx_to_dual(dcdxW)
     boundary_conditionE = Boundary_EAST(c_dual, dcdx_dual)
-    do ic = 1,N                   ! equation number
-      do i = 1,N                  ! specie number
+    do ic = 1,N                             ! equation number
+      do i = 1,N                            ! specie number
         fW(ic, i) = boundary_conditionE(ic)%dx(i)
         dW(ic, i) = boundary_conditionE(ic)%dx(N+i)
       end do
@@ -2279,16 +2393,17 @@ subroutine auto_fill(j)
 
   else                                      ! if ( (j /= 1).AND.(j /= NJ) ) then
     ! loop to fill in the fillmat matrices: (dW, dE, fW, fE, rj, smG)
-    do ic = 1,N                   ! equation number
-      do i = 1,N                  ! specie number
-        fW(ic, i) = flux_dualW(ic)%dx(i)
-        fE(ic, i) = flux_dualE(ic)%dx(i)
-        dW(ic, i) = flux_dualW(ic)%dx(N+i)
-        dE(ic, i) = flux_dualE(ic)%dx(N+i)
+    do ic = 1,N                               ! equation number
+      do i = 1,N                              ! specie number
+        fW(ic, i) = flux_dualW(ic)%dx(i) * Crx_Area(1,j)
+        fE(ic, i) = flux_dualE(ic)%dx(i) * Crx_Area(2,j)
+        dW(ic, i) = flux_dualW(ic)%dx(N+i) * Crx_Area(1,j)
+        dE(ic, i) = flux_dualE(ic)%dx(N+i) * Crx_Area(2,j)
 
-        rj(ic, i) = (reaction_dual(ic)%dx(i) - accumulation_dual(ic)%dx(i))*delX(j)
+        rj(ic, i) = (reaction_dual(ic)%dx(i) - accumulation_dual(ic)%dx(i))*Cntrl_Vol(j)
       end do
-      smG(ic) = -(flux_dualW(ic)%x - flux_dualE(ic)%x + reaction_dual(ic)%x * delX(j))
+      smG(ic) = -( flux_dualW(ic)%x * Crx_Area(1,j) - flux_dualE(ic)%x * Crx_Area(2,j) &
+              & + reaction_dual(ic)%x * Cntrl_Vol(j) )
     end do
   end if
 
@@ -2296,113 +2411,25 @@ end subroutine auto_fill
 
 
 ! !*********************************BOUND VAL**************************************
-! !____________________________________________________________________________
+! !_____________________________________________________________________________
 ! !   This subroutine assumes solution of a linear boundary-value problem at
 ! !   a given time step.  There is thus no need for iteration.
 ! !     c=cprev+delC, we solve for delC using forward time central difference method.
 ! !     It is assumed that the time step is small enough that the linearization is exact.
 ! !     Thus, iterations are not necessary.  This assumption is of course tested by
 ! !     computer experiments on the effect of time-step size.
-! !____________________________________________________________________________
+! !_____________________________________________________________________________
 !
-! subroutine bound_val_e(h)
-!       use user_input
-!       use variables
-!       implicit double precision(a-h,o-z)
-!
-! !************************************ Electrode ******************************************
-! !************************************ Electrode ******************************************
-! !************************************ Electrode ******************************************
-!
-! ! initialize all of the finite volume (matrix) coefficients to zero
-!
-!       do 150 j=1,nj
-!          do 123 ic=1,n
-!             do 123 kc=1,n
-!                dE(ic,kc) = 0.0
-!                dW(ic,kc) = 0.0
-!                fE(ic,kc) = 0.0
-!                fW(ic,kc) = 0.0
-!                rj(ic,kc) = 0.0
-! 123      continue
-!
-! call fillmat(h,j)
-! ! Fillmat is determining small coefficents based on the user input. Must go to
-! ! fillmat and change coefficent definitions based on governing differential equations.
-!
-! call ABDGXY(h,j)
-! ! ABDGXY equates the large coefficents based on the small coefficents. These equations
-! ! can be found in Newman appendix C.
-!
-! call BAND(J)
-! ! BAND(J) computes delC and calls MATINV to solve the problem using gaussian elimination.
-!
-! ! for all the dependent variables, the values are update as c = cprev + delC
-!
-! 150   continue
-!         do 12 k=1,n
-!          do 12 j=1,nj
-!              cprev(k,j) = cprev(k,j) + delC(k,j)
-! 12       continue
-!       return
-! end subroutine bound_val_e
-!
-! !******************************INITIAL GUESS****************************************
-!
-subroutine initial_condition()
-      use user_input
-      use variables
 
-      implicit none
-      real :: h
-      integer :: j
-!************************************ Electrode ******************************************
-!************************************ Electrode ******************************************
-!************************************ Electrode ******************************************
-
-      h=xmax/float(nj-2)
-      do j=1,NJ
-
-        if (j.EQ.1) then
-          xx(j) = 0.0
-        else if (j.EQ.NJ) then
-          xx(NJ) = xmax
-        else
-          xx(j) = h*float(j-1) - h/2.0
-        end if
-
-      end do
-
-      do j=2, NJ-1
-         delx(j) = h
-      end do
-      ! it is common in the finite volume code to set the control volumes at the boundaries to zero
-         delx(1) = 0.0
-         delx(NJ) = 0.0
-
-      do j=1,NJ
-        cprev(1,j) = cbulk
-        cprev(2,j) = 2.0 !Phi_1_init
-        ! cprev(3,j) = Phi_2_init
-        ! cprev(4,j) = cs_init
-      end do
-
-      return
-end subroutine initial_condition
-!
-!
-!
-!
-!
-!
-!
 !
 ! !************************************ABDGXY******************************************
 !
 subroutine ABDGXY(j)
+  ! ABDGXY equates the large coefficents based on the small coefficents. These equations
+  ! can be found in Newman appendix C.
       use user_input, only: N, NJ
       use GOV_EQNS
-      use variables, only: A, B, D, G, X, Y ! This needs to be paired down just ot the essentials
+      use variables, only: A, B, D, G, X, Y ! This needs to be paired down just to the essentials
       ! use ABDGXY_VARS - A, B, D, G, X, Y
       implicit none
       integer :: j, ii, kk
@@ -2509,6 +2536,7 @@ SUBROUTINE MATINV(N, M, DETERM)
 ! !*************************************BAND******************************************
 !
 SUBROUTINE BAND(J)
+! BAND(J) computes delC and calls MATINV to solve the problem using gaussian elimination.
 use variables, only: A, B, delC, D, G, X, Y, NP1, E
 ! use variables, only: delC
 use user_input, only: N, NJ

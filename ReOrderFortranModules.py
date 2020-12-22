@@ -216,13 +216,11 @@ with open('ReSort' + filename, 'w') as ReSort_file:
 # In[11]:
 
 
-os.chdir('/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/MakeFiles/Test/')
+os.chdir('/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ReSortExamples/')
 
-ReWriteFortran('TEST.f95')
+ReWriteFortran('TEST_unSorted.f95')
 
 # In[13]:
-
-os.chdir('/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/')
 
 name = 'DNAD_BAND_unSorted.f95'
 

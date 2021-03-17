@@ -60,9 +60,8 @@ os.chdir(cw)
 # Simple Diffusion (No Rxn) - 1 specie
 # ------------------------------------------------------------------------------
 os.chdir(cw)
-os.chdir('Diffusion')
+os.chdir('1_Diffusion')
 
-# In[2]:
 # import the data file
 data = pd.read_table('Time_Conc_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
 
@@ -82,14 +81,13 @@ plt.xlabel('Position (μm)')
 
 
 
-# In[3]:
+# In[2]:
 # ------------------------------------------------------------------------------
 # Diffusion Reaction - 1 specie
 # ------------------------------------------------------------------------------
 os.chdir(cw)
-os.chdir('Diffusion_Reaction')
+os.chdir('2_Diffusion_Reaction')
 
-# In[4]:
 # import the data file
 data = pd.read_table('Time_Conc_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
 
@@ -105,15 +103,13 @@ plt.ylabel('Concentration (mol/L)')
 plt.xlabel('Position (μm)')
 
 
-# In[5]:
+# In[3]:
 # ------------------------------------------------------------------------------
 # Diffusion Reaction - 2 specie
 # ------------------------------------------------------------------------------
 os.chdir(cw)
-os.chdir('TwoSpecie_Diff_Rxn')
+os.chdir('3_TwoSpecie_Diff_Rxn')
 
-
-# In[6]:
 # import the data file
 data = pd.read_table('Time_Conc_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
 
@@ -138,15 +134,13 @@ ax[2].set_title('c_x vs Time')
 ax[2].set_ylabel('Concentration (mol/L)')
 ax[2].set_xlabel('Position (μm)')
 
-# In[5]:
+# In[4]:
 # ------------------------------------------------------------------------------
 # Electrode Model - Half Cell
 # ------------------------------------------------------------------------------
 os.chdir(cw)
-os.chdir('Electrode_HallCell')
+os.chdir('4_Electrode_HallCell')
 
-
-# In[6]:
 # import the data file
 data = pd.read_table('Time_Voltage_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
 
@@ -199,3 +193,202 @@ ax2[4].set_xlabel('Position (μm)')
 ax2[4].set_ylabel('Potential (Volts)')
 
 fig2.tight_layout()
+
+
+# In[5]:
+# ------------------------------------------------------------------------------
+# Agglomerate Model
+# ------------------------------------------------------------------------------
+os.chdir(cw)
+os.chdir('5_Agglomerate')
+
+# import the data file
+data = pd.read_table('Time_Voltage_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
+
+print(data.keys())
+
+rows, columns = [1, 1]
+ax, fig = axes(1, rows, columns)
+rows, columns = [2, 2]
+ax2, fig2 = axes(2, rows, columns)
+
+df_slice = data[(data['Position'] == data['Position'].max()) & (data['Voltage'] <= 3.0)]
+
+NJ = len(np.unique(data['Position']))
+
+ax[1].plot(df_slice['Equivalence'], df_slice['Voltage'])
+
+ax[1].set_ylabel('Voltage (Volts)')
+ax[1].set_xlabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+
+df_slice_D = data[(data['State'] == 'D')]
+equivs = np.unique(df_slice_D['Equivalence'])
+
+
+for equiv in [0, 0.1, 0.2, 0.3, 0.4, 0.5]:
+    min_ind = np.where(abs(equivs - equiv) == abs(equivs - equiv).min())
+    equiv = equivs[min_ind][0]
+
+    df_slice_D = data[(data['State'] == 'D') & (data['Equivalence'] == equiv)]
+    ax2[1].plot(df_slice_D['Position'], df_slice_D['Soln_Conc'])
+    ax2[3].plot(df_slice_D['Position'], df_slice_D['Solid_Conc'])
+    ax2[2].plot(df_slice_D['Position'], df_slice_D['Voltage'])
+    ax2[4].plot(df_slice_D['Position'], df_slice_D['Solution_Pot'])
+
+
+ax2[1].set_title('Solution Concentration')
+ax2[1].set_xlabel('Position (μm)')
+ax2[1].set_ylabel('Concentration (mol/L)')
+
+ax2[3].set_title('Solid-State Concentration')
+ax2[3].set_xlabel('Position (μm)')
+ax2[3].set_ylabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+ax2[2].set_title('Solid-State Potential')
+ax2[2].set_xlabel('Position (μm)')
+ax2[2].set_ylabel('Potential (Volts)')
+
+ax2[4].set_title('Solution Potential')
+ax2[4].set_xlabel('Position (μm)')
+ax2[4].set_ylabel('Potential (Volts)')
+
+fig2.tight_layout()
+
+
+# In[6]:
+# ------------------------------------------------------------------------------
+# Crystal Model - Simple Diffusion (No concentration dependence)
+# ------------------------------------------------------------------------------
+os.chdir(cw)
+os.chdir('6_Crystal/SimpleDiffusion')
+
+# import the data file
+data = pd.read_table('Time_Voltage_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
+
+print(data.keys())
+
+rows, columns = [1, 2]
+ax, fig = axes(1, rows, columns)
+
+df_slice = data[(data['Position'] == data['Position'].max()) & (data['Voltage'] <= 3.1)]
+
+NJ = len(np.unique(data['Position']))
+
+ax[1].plot(df_slice['Equivalence'], df_slice['Voltage'])
+
+ax[1].set_title('Measured Potential')
+ax[1].set_ylabel('Potential (Volts)')
+ax[1].set_xlabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+
+df_slice_D = data[(data['State'] == 'D')]
+equivs = np.unique(df_slice_D['Equivalence'])
+
+
+for equiv in [0, 0.1, 0.2, 0.3, 0.4, 0.5]:
+    min_ind = np.where(abs(equivs - equiv) == abs(equivs - equiv).min())
+    equiv = equivs[min_ind][0]
+
+    df_slice_D = data[(data['State'] == 'D') & (data['Equivalence'] == equiv)]
+    ax[2].plot(df_slice_D['Position'], df_slice_D['Solid_Conc'])
+
+ax[2].set_title('Solid-State Concentration')
+ax[2].set_xlabel('Position (nm)')
+ax[2].set_ylabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+fig.tight_layout()
+
+# In[7]:
+# ------------------------------------------------------------------------------
+# Crystal Model - Concentration Dependent Diffusion
+# ------------------------------------------------------------------------------
+os.chdir(cw)
+os.chdir('6_Crystal/Conc_Depend_Diff')
+
+# import the data file
+data = pd.read_table('Time_Voltage_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
+
+print(data.keys())
+
+rows, columns = [1, 2]
+ax, fig = axes(1, rows, columns)
+
+df_slice = data[(data['Position'] == data['Position'].max()) & (data['Voltage'] <= 3.1)]
+
+NJ = len(np.unique(data['Position']))
+
+ax[1].plot(df_slice['Equivalence'], df_slice['Voltage'])
+
+ax[1].set_title('Measured Potential')
+ax[1].set_ylabel('Potential (Volts)')
+ax[1].set_xlabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+
+df_slice_D = data[(data['State'] == 'D')]
+equivs = np.unique(df_slice_D['Equivalence'])
+
+
+for equiv in np.linspace(0, 1.5, 5):
+    min_ind = np.where(abs(equivs - equiv) == abs(equivs - equiv).min())
+    equiv = equivs[min_ind][0]
+
+    df_slice_D = data[(data['State'] == 'D') & (data['Equivalence'] == equiv)]
+    ax[2].plot(df_slice_D['Position'], df_slice_D['Solid_Conc'])
+
+ax[2].set_title('Solid-State Concentration')
+ax[2].set_xlabel('Position (nm)')
+ax[2].set_ylabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+fig.tight_layout()
+
+
+# In[8]:
+# ------------------------------------------------------------------------------
+# Crystal Model - Phase Change
+# ------------------------------------------------------------------------------
+os.chdir(cw)
+os.chdir('6_Crystal/PhaseChange')
+
+# import the data file
+data = pd.read_table('Time_Voltage_Position.txt', delim_whitespace=True, header=0, skiprows=[1])
+
+print(data.keys())
+
+rows, columns = [2, 2]
+ax, fig = axes(1, rows, columns)
+
+df_slice = data[(data['Position'] == data['Position'].max()) & (data['Voltage'] <= 3.1)]
+
+NJ = len(np.unique(data['Position']))
+
+ax[1].plot(df_slice['Equivalence'], df_slice['Voltage'])
+
+ax[1].set_title('Measured Potential')
+ax[1].set_ylabel('Potential (Volts)')
+ax[1].set_xlabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+
+df_slice_D = data[(data['State'] == 'D')]
+equivs = np.unique(df_slice_D['Equivalence'])
+
+
+for equiv in np.linspace(0, 2.1, 5):
+    min_ind = np.where(abs(equivs - equiv) == abs(equivs - equiv).min())
+    equiv = equivs[min_ind][0]
+
+    df_slice_D = data[(data['State'] == 'D') & (data['Equivalence'] == equiv)]
+    ax[2].plot(df_slice_D['Position'], df_slice_D['Solid_Conc'])
+    ax[4].plot(df_slice_D['Position'], df_slice_D['Theta_beta'])
+
+ax[2].set_title('Solid-State Concentration')
+ax[2].set_xlabel('Position (nm)')
+ax[2].set_ylabel('Equivalence $\mathregular{Li_xFe_3O_4}$')
+
+ax[4].set_title('Volume Fraction β-Phase')
+ax[4].set_xlabel('Position (nm)')
+ax[4].set_ylabel('$\mathregular{\\theta_{\\beta}}$')
+
+ax[3].axis('off')
+
+fig.tight_layout()

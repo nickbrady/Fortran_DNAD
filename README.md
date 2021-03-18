@@ -14,5 +14,5 @@ Some example problems are included to help the user understand how models can be
 
 ## Code Structure
 Because `dnadmod` is a long module and does not need to be edited frequently, it is logical to put it at the end of the Fortran files. However, Fortran necessitates that modules appear before subsequent modules that depend on them. 
-To be able to keep `dnadmod` at the end of the file and also be able to run the program, the python script "SortFortranModules.py" was written to re-order the modules and then rule the programs. 
-If one is not interested in using a python script to run the Fortran programs, one can elect to run the files that begin with "ReSort_..." from the terminal by first compiling the program `gfortran -fdefault-real-8 _file_name_', and then executing the program `./a.out`
+To be able to keep `dnadmod` at the end of the file and also be able to run the program, the python script "SortFortranModules.py" was written to re-order the modules and then run the programs. 
+If one is not interested in using a python script to run the Fortran programs, one can elect to run the files that begin with "ReSort" from the terminal by first compiling the program: `gfortran -fdefault-real-8 _file_name_` and then executing the program: `./a.out`

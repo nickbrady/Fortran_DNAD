@@ -336,7 +336,7 @@ contains
   ! (1) d(c_a * 0_a + c_b * 0_b)/dt = D d^2c_a/dx^2
   ! (2) c_b d(0_b)/dt = k_b (c_a - c_{a,sat}) * (1 - 0_b)
 
-  function FLUX(c_vars_dual, dcdx_vars_dual) result(Flux_)
+  function FLUX(c_vars_dual, dcdx_vars_dual)                      result(Flux_)
     ! (1)   N = -D * dc(1)/dx
     ! (2)   N = 0.0
     type(dual), dimension(N)              :: Flux_
@@ -353,7 +353,7 @@ contains
 
   end function FLUX
 
-  function RXN(c_vars_dual) result(Rxn_)
+  function RXN(c_vars_dual)                                       result(Rxn_)
     ! (1)  0
     ! (2) k_b (c_a - c_{a,sat}) (1 - 0_b)
     type(dual), dimension(N)               :: Rxn_
@@ -375,7 +375,7 @@ contains
 
   end function RXN
 
-  function ACCUM(c_vars_dual) result(Accum_)
+  function ACCUM(c_vars_dual)                                    result(Accum_)
     ! (1) d(c_a * 0_a + c_b * 0_b)/dt
     ! (2) d(c_b * 0_b)/dt
     type(dual), dimension(N)              :: Accum_
@@ -388,7 +388,11 @@ contains
 
 
     Accum_(1) = (c_a * theta_a + c_beta * theta_b)/delT
-    Accum_(2) = (c_beta * theta_b)/delT
+    Accum_(2) = (c_beta * theta_b)/delT                 ! d(c_b * 0_b)/dt
+
+    ! accumulation terms are implicitly d/dt, so the function value is unphysical; only the derivatives are physically relevant
+    Accum_(:)%x = 0.0
+    ! setting Accum_(:)%x = 0 makes it easier to use ACCUM in writing boundary condtions
 
   end function ACCUM
 ! ******************************************************************************
@@ -402,57 +406,46 @@ contains
 ! i.e. flux = 1.0   -->   flux - 1.0 = 0.0    -->   BC_WEST_(N) = flux - 1.0
 ! ********** special case **********
 ! i.e. dc/dt = rxn  -->   dc/dt - rxn = 0.0
-! dc_n   = c_vars_dual(n)
-! dc_n%x = 0.0      -->   dc        -->           BC_WEST_(2) = dc_n/delT - rxn
-  function Boundary_WEST (c_vars_dual, dcdx_vars_dual) result(BC_WEST_)
+  function Boundary_WEST (c_vars_dual, dcdx_vars_dual)         result(BC_WEST_)
     ! (1)   N_x = 0
+    ! (2) d(c_b * 0_b)/dt = k_b (c_a - c_{a,sat}) (1 - 0_b)
     type(dual), dimension(N)               :: BC_WEST_
     type(dual), dimension(N), intent(in)   :: c_vars_dual, dcdx_vars_dual
-    type(dual), dimension(N)               :: flux_temp, rxn_temp
+    type(dual), dimension(N)               :: flux_temp, rxn_temp, accum_temp
 
     type(dual) :: c, theta_b
-    type(dual) :: dc_a, dtheta_b
 
     c       = c_vars_dual(1)
     theta_b = c_vars_dual(2)
 
-    dc_a     = c
-    dtheta_b = theta_b
-    dc_a%x   = 0.
-    dtheta_b%x = 0.
-
-    flux_temp = FLUX(c_vars_dual, dcdx_vars_dual)
-    rxn_temp  = RXN(c_vars_dual)
+    flux_temp   = FLUX(c_vars_dual, dcdx_vars_dual)
+    rxn_temp    = RXN(c_vars_dual)
+    accum_temp  = ACCUM(c_vars_dual)
 
     BC_WEST_(1) = flux_temp(1) - 0.0
-    BC_WEST_(2) = (c_beta * dtheta_b)/delT - rxn_temp(2)
+    BC_WEST_(2) = accum_temp(2) - rxn_temp(2)
 
   end function Boundary_WEST
 
-  function Boundary_EAST (c_vars_dual, dcdx_vars_dual) result(BC_EAST_)
-    ! (1)   N_x = i_app
+  function Boundary_EAST (c_vars_dual, dcdx_vars_dual)         result(BC_EAST_)
+    ! (1)   N_x * (0_a) = i_app / F
+    ! (2) d(c_b * 0_b)/dt = k_b (c_a - c_{a,sat}) (1 - 0_b)
     type(dual), dimension(N)               :: BC_EAST_
     type(dual), dimension(N), intent(in)   :: c_vars_dual, dcdx_vars_dual
-    type(dual), dimension(N)               :: flux_temp, rxn_temp
+    type(dual), dimension(N)               :: flux_temp, rxn_temp, accum_temp
 
     type(dual) :: c, theta_b, theta_a
-    type(dual) :: dc_a, dtheta_b
 
     c       = c_vars_dual(1)
     theta_b = c_vars_dual(2)
     theta_a = 1. - theta_b
 
-    dc_a     = c
-    dtheta_b = theta_b
-    dc_a%x   = 0.
-    dtheta_b%x = 0.
-
-    flux_temp = FLUX(c_vars_dual, dcdx_vars_dual)
-    rxn_temp  = RXN(c_vars_dual)
+    flux_temp   = FLUX(c_vars_dual, dcdx_vars_dual)
+    rxn_temp    = RXN(c_vars_dual)
+    accum_temp  = ACCUM(c_vars_dual)
 
     BC_EAST_(1) = flux_temp(1) * theta_a - applied_current_A / Fconst
-    ! N_x = i / F
-    BC_EAST_(2) = (c_beta * dtheta_b)/delT - rxn_temp(2)
+    BC_EAST_(2) = accum_temp(2) - rxn_temp(2)
 
   end function Boundary_EAST
 ! ******************************************************************************

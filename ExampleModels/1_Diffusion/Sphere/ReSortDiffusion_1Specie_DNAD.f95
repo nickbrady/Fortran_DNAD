@@ -1854,17 +1854,21 @@ module user_input
   implicit none
 
   integer, parameter :: NJ = 42                          ! Number of mesh points
-  integer, parameter :: Numbertimesteps = 30 * 3.6e3     ! Number of time steps
+  integer, parameter :: Numbertimesteps = 20.1 * 3.6e3     ! Number of time steps
   real               :: delT = 1.0                       ! size of timestep [s]
   real               :: time                             ! [s]
-  real               :: xmax = 1e-4                      ! 500 um is 500e-4 cm
+  real, parameter    :: xmax = 1e0                       ! 1 cm
+  real, parameter    :: Area_Ratio = 10
+  real, parameter    :: &
+  & R_1 = (2*xmax + ((2*xmax)**2 + 4*(Area_Ratio-1)*xmax**2)**0.5) / (2*(Area_Ratio - 1))
+  real, parameter    :: R_NJ = R_1 + xmax
 
   real, parameter :: PI = 4.0 * ATAN(1.0)       ! pi - Geometric constant
 
-  real :: diff  = 1e-13                       ! diffusion coefficient [cm^2/s]
+  real :: diff  = 1e-5                        ! diffusion coefficient [cm^2/s]
   real :: cbulk = 0.001                       ! concentration [mol/cm3]
 
-  character(len=65) :: geometry = 'Rectangular'   ! system Geometry: Rectangular, Cylindrical, Spherical
+  character(len=65) :: geometry = 'Spherical'   ! system Geometry: Rectangular, Cylindrical, Spherical
 
 end module user_input
 !*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
@@ -1953,14 +1957,14 @@ contains
     if (it.EQ.1) then
 !           write the headers on the first entrance into write all voltage
       write(56, header_fmt) 'Time',  'Position', 'Conc'
-      write(56, header_fmt) 'hours', 'um'      , 'mol/L'
+      write(56, header_fmt) 'hours', 'cm'      , 'mol/L'
                                                     !
     end if                                          !
                                                     !
     do j = 1, NJ                                    !
       c0 = cprev(1,j) * 1e3                         !
                                                     !
-      write(56, data_fmt) t_write,    xx(j)*1e4,    c0
+      write(56, data_fmt) t_write,    xx(j),    c0
 
     end do
 
@@ -2032,6 +2036,7 @@ contains
     c0    = c_vars_dual(1)
 
     Accum_(1) = c0/delT
+    Accum_%x = 0.0
 
   end function ACCUM
 ! ******************************************************************************
@@ -2251,11 +2256,11 @@ subroutine initial_condition()
   do j=1,NJ
 
     if (j.EQ.1) then
-      xx(j) = 0.0
+      xx(j) = R_1
     else if (j.EQ.NJ) then
-      xx(NJ) = xmax
+      xx(NJ) = R_NJ
     else
-      xx(j) = h*float(j-1) - h/2.0
+      xx(j) = xx(1) + h*float(j-1) - h/2.0
     end if
 
   end do
@@ -2273,6 +2278,8 @@ subroutine initial_condition()
   control_volume_input = trim(geometry)                   ! Define the control volume
   Cntrl_Vol = Control_Volume(control_volume_input)        ! size based on the
   Crx_Area = Cross_Sectional_Area(control_volume_input)   ! specified system geometry
+
+  print*, R_1, R_NJ
 
   return                                                  ! is this necessary?
 end subroutine initial_condition

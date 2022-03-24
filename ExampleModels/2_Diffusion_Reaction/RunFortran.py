@@ -1,4 +1,5 @@
 #
+import sys
 import numpy as np                          # Useful for numerical calculations on an array
 import os                                   # Used for changing directories and open files with folders
 from subprocess import call                 # Allows Python to call shell script
@@ -51,8 +52,12 @@ def sed(pattern, replace, source, dest=None, count=0):
     if not dest:
         shutil.move(name, source)
 
-def run_fortran(_run_file_):
-    p = call(['gfortran', '-fdefault-real-8', _run_file_])
+def run_fortran(_run_file_=None):
+    if _run_file_ == None:
+        _run_file_ = glob.glob('*.f95')
+        _run_file_ = _run_file_[0]
+
+    p = call(['gfortran', '-fdefault-real-8', '-O3', _run_file_])
     p = call(['./a.out'])
 
     # remove executable and module files
@@ -63,10 +68,14 @@ def run_fortran(_run_file_):
 
 cwd = os.getcwd()
 
-fortran_template = 'DiffusionRxn_1Specie_DNAD.f95'
-
+# fortran_template = 'DiffusionRxn_1Specie_DNAD.f95'
+try:
+    fortran_template = sys.argv[1]
+    run_fortran(fortran_template)
+except:
+    run_fortran()
 # sort the modules in the fortran file
-p = call(['SortFortranModules.py', fortran_template])
-_sorted_fortran_template = 'ReSort' + fortran_template
-
-run_fortran(_sorted_fortran_template)        # run fortran with values
+# p = call(['SortFortranModules.py', fortran_template])
+# _sorted_fortran_template = 'ReSort' + fortran_template
+#
+# run_fortran(_sorted_fortran_template)        # run fortran with values

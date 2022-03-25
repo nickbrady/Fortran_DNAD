@@ -53,6 +53,14 @@ subroutine auto_fill(j)
   ! fE = 0.0
   ! rj = 0.0
   ! smG = 0.0
+  ! setting these matrices to 0 is redundant except for rj at the boundaries
+  ! dW, dE, fW, fE, rj, smG are all set for the interior points
+  ! at boundary_west ( j=1), only dE, fE are used in ABDGXY
+  ! at boundary_east (j=NJ), only dW, fW are used in ABDGXY
+  ! smG is set even at the boundaries
+  ! special care only needs to be given to rj. But it seems this could be reworked
+  ! because Cntrl_Vol = 0 at these interface regions, but for now just setting
+  ! rj = 0 at the boundaries seems to work
 
   !-----------------------------------------------------------------------------
   ! Calculate cW, cE, dcdxW, dcdxE
@@ -87,6 +95,7 @@ subroutine auto_fill(j)
     do ic = 1,N
         fE(ic, :) = boundary_conditionW(ic)%dx(1:N)
         dE(ic, :) = boundary_conditionW(ic)%dx(N+1:2*N)
+        rj = 0.0
 
         smG(ic)   = -(-boundary_conditionW(ic)%x)
     end do
@@ -96,6 +105,7 @@ subroutine auto_fill(j)
     do ic = 1,N
         fW(ic, :) = boundary_conditionE(ic)%dx(1:N)
         dW(ic, :) = boundary_conditionE(ic)%dx(N+1:2*N)
+        rj = 0.0
 
         smG(ic)   = -(boundary_conditionE(ic)%x)
     end do

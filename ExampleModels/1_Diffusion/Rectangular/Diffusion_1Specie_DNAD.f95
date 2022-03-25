@@ -19,8 +19,8 @@ module user_input
 
   real, parameter :: PI = 4.0 * ATAN(1.0)         ! pi - Geometric constant
 
-  real :: diff  = 1e-1                            ! diffusion coefficient [cm^2/s]
-  real :: cbulk = 0.001                           ! concentration [mol/cm3]
+  real :: diff  = 1e-4                            ! diffusion coefficient [cm^2/s]
+  real :: cbulk = 1.0                           ! concentration [mol/cm3]
 
   character(len=65) :: geometry = 'Rectangular'   ! system Geometry: Rectangular, Cylindrical, Spherical
 
@@ -63,15 +63,15 @@ contains
     call t_write__Equiv__Li_Bal_Assignment()
     call write_to_screen(it)
 
-    ! if (it == 1) then
-    !   call write_to_screen(it)
-    !   call write_positional_information_to_file(it)
-    !   last_write_time = time
-    ! else if ( (time - last_write_time).GE.write_every_x_sec ) then
-    !   call write_to_screen(it)
-    !   call write_positional_information_to_file(it)
-    !   last_write_time = time
-    ! end if
+    if (it == 1) then
+      call write_to_screen(it)
+      call write_positional_information_to_file(it)
+      last_write_time = time
+    else if ( (time - last_write_time).GE.write_every_x_sec ) then
+      call write_to_screen(it)
+      call write_positional_information_to_file(it)
+      last_write_time = time
+    end if
   end subroutine write_condition
 
 
@@ -104,9 +104,9 @@ contains
     end if                                          !
                                                     !
     do j = 1, NJ                                    !
-      c0 = cprev(1,j) * 1e3                         !
+      c0 = cprev(1,j)                               !
                                                     !
-      write(56, data_fmt) t_write,    xx(j)*1e4,    c0
+      write(56, data_fmt) t_write,    xx(j),    c0
 
     end do
 
@@ -257,7 +257,7 @@ program unsteady
 
   do it = 1, Numbertimesteps
 
-    ! call write_condition(it)
+    call write_condition(it)
     ! function to dynamically and integlligently change delT
     ! **************************************************************************
     ! ******************************** BOUND VAL *******************************

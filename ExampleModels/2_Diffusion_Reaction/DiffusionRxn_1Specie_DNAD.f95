@@ -9,7 +9,7 @@ module user_input
   implicit none
 
   integer, parameter :: N = 1
-  integer, parameter :: NJ = 22                          ! Number of mesh points
+  integer, parameter :: NJ = 42                          ! Number of mesh points
 
   integer, parameter :: Numbertimesteps = 30 * 3.6e3     ! Number of time steps
   real               :: delT = 1.0                       ! size of timestep [s]
@@ -225,6 +225,7 @@ contains
     c0    = c_vars_dual(1)
 
     BC_EAST_(1) = flux_temp(1) - 0.0                            ! c0 = 0.1*cbulk
+    ! print*, flux_temp(1), dcdx_vars_dual(1)
 
   end function Boundary_EAST
 

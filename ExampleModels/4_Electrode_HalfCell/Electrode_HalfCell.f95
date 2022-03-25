@@ -272,9 +272,43 @@ module GOV_EQNS
 
   type(dual) :: c0, c_x, Phi_1, Phi_2
   type(dual) :: dc0dx, dc_xdx, dPhi_1dx, dPhi_2dx
-  type(dual), dimension(N)               :: flux_temp, accum_temp, rxn_temp
+  type(dual), dimension(N) :: flux_temp, accum_temp, rxn_temp
 
 contains
+  ! General Equations
+  ! Analytic:
+  !     ∂cᵢ/∂t = -∇⋅𝐍ᵢ + Rᵢ
+  ! Finite Volume (Control Volume):
+  !     ΔV ∂c/∂t = (Aₓᵢ⋅𝐍ᵢ - Aₓₒ⋅𝐍ₒ) + ΔV ⋅ Rⱼ
+  !
+  ! frequently, the control volume (ΔV) and cross-sectional area (Aₓ) are given
+  ! by the system geometry
+  ! 𝐍ᵢ is the flux of specie i
+  ! Rᵢ is the rate of generation (reaction rate) of specie i
+
+  ! (1) ϵ ∂cₒ/∂t = D∇²cₒ + a iᵣₓ / F
+  ! 𝐍ₒ = -ϵ * (D_Li * ∇cₒ + z_Li * u_Li * cₒ F ∇Φ₂)
+  ! Rₒ =  a iᵣₓ / F
+  ! BC-WEST : cₒ = cbulk
+  ! BC-EAST : 𝐍ₒ = 0
+
+  ! (2) (1-ϵ) ∂cₓ/∂t = - a iᵣₓ / F
+  ! 𝐍ₓ = 0
+  ! Rₓ = -a iᵣₓ / F
+  ! BC-WEST : (1-ϵ) ∂cₓ/∂t = - a iᵣₓ / F
+  ! BC-EAST : (1-ϵ) ∂cₓ/∂t = - a iᵣₓ / F
+
+  ! (3) 0 = -∇⋅𝐢₁ - a iᵣₓ
+  ! 𝐢₁ = -(1-ϵ) σ ∇Φ₁
+  ! Rₓ =  a iᵣₓ
+  ! BC-WEST : 𝐢₁ = 0                (Solid-State Current = 0)
+  ! BC-EAST : Φ₂ = 0               (arbitrary ref Voltage)
+
+  ! (4) 0 = -∇⋅𝐢₂ + a iᵣₓ
+  ! 𝐢₂/F = ∑ᵢ (zᵢ 𝐍ᵢ)
+  ! Rₓ = -a iᵣₓ
+  ! BC-WEST : 𝐢₁ = i_applied     (All current carried in solid state)
+  ! BC-EAST : 𝐢₂ = 0             (Solution Current = 0)
 
 ! ******************************************************************************
 ! **************************** GOVERNING EQUATIONS *****************************
@@ -284,12 +318,12 @@ contains
 ! i.e c0 = c_vars_dual(1), dPhi2_dx = dcdx_vars_dual(2)
 
   function FLUX(c_vars_dual, dcdx_vars_dual) result(Flux_)
-    ! (1)   N_0 = -eps * (D_Li * dc0/dx + z_Li * u_Li * c0 * F * dPhi_2/dx)
-    ! (2)   N_x = 0
-    ! (3)   i_1 = -(1-eps) * sigma * dPhi_1/dx
-    ! (4)   i_2/F = -eps * [ (z_1 * diff_1 + z_2 * diff_2)*dc0/dx
-    !                       (z_1**2 * u_1 + z_2**2 * u_2) * F * c0 * dPhi_2/dx]
-    !       i.e. i_2 / F = sum_i (z_i * N_i)
+    ! (1)   𝐍ₒ = -ϵ * (D_Li * ∇cₒ + z_Li * u_Li * cₒ F ∇Φ₂)
+    ! (2)   𝐍ₓ = 0
+    ! (3)   𝐢₁ = -(1-ϵ) σ ∇Φ₁
+    ! (4)   𝐢₂/F = -ϵ * [ (z₁ D₁ + z₂ D₂) ∇cₒ
+    !                       ((z₁)² * u₁ + (z₂)² * u₂) F cₒ ∇Φ₂]
+    !       i.e. 𝐢₂/F = ∑ᵢ (zᵢ 𝐍ᵢ)
     type(dual), dimension(N)              :: Flux_
     type(dual), dimension(N), intent(in)  :: c_vars_dual, dcdx_vars_dual
     type(dual)                            :: diff_
@@ -318,10 +352,10 @@ contains
   end function FLUX
 
   function RXN(c_vars_dual) result(Rxn_)
-    ! (1)  a * i_rxn / F
-    ! (2) -a * i_rxn / F
-    ! (3) -a * i_rxn
-    ! (4)  a * i_rxn
+    ! (1)  a * iᵣₓ / F
+    ! (2) -a * iᵣₓ / F
+    ! (3) -a * iᵣₓ
+    ! (4)  a * iᵣₓ
     type(dual), dimension(N)               :: Rxn_
     type(dual), dimension(N), intent(in)   :: c_vars_dual
     type(dual) :: i_rxn
@@ -341,8 +375,8 @@ contains
   end function RXN
 
   function ACCUM(c_vars_dual) result(Accum_)
-    ! (1) eps * dc0/dt
-    ! (2) (1-eps) * dc_x/dt
+    ! (1) ϵ * ∂cₒ/∂t
+    ! (2) (1-ϵ) * ∂cₓ/∂t
     ! (3) 0                       (no accumulation of e-)
     ! (4) 0                       (electroneutrality - ions)
     type(dual), dimension(N)              :: Accum_
@@ -374,10 +408,10 @@ contains
 ! no spatial gradients in governing equation - can repeat gov eqn at boundary
 ! BC_WEST_(N) = accum_temp(N) - rxn_temp(N)
   function Boundary_WEST (c_vars_dual, dcdx_vars_dual) result(BC_WEST_)
-    ! (1)   c_0 = cbulk
-    ! (2)   (1-eps) dc/dt = -a * i_rxn/F
-    ! (3)   i_1 = 0                               (Solid-State Current = 0)
-    ! (4)   Phi_2 = 0                             (arbitrary ref Voltage)
+    ! (1)   cₒ = cbulk
+    ! (2)   (1 - ϵ) ∂c/∂t = -a iᵣₓ/F
+    ! (3)   𝐢₁ = 0                               (Solid-State Current = 0)
+    ! (4)   Φ₂ = 0                             (arbitrary ref Voltage)
     type(dual), dimension(N)               :: BC_WEST_
     type(dual), dimension(N), intent(in)   :: c_vars_dual, dcdx_vars_dual
 
@@ -398,10 +432,10 @@ contains
   end function Boundary_WEST
 
   function Boundary_EAST (c_vars_dual, dcdx_vars_dual) result(BC_EAST_)
-    ! (1)   N_0 = 0
-    ! (2)   (1-eps) dc/dt = -a * i_rxn/F
-    ! (3)   i_1   = i_applied
-    ! (4)   i_2 = 0                           (Solution Current = 0)
+    ! (1)   𝐍ₒ = 0
+    ! (2)   (1 - ϵ) ∂c/∂t = -a iᵣₓ/F
+    ! (3)   𝐢₁ = i_applied
+    ! (4)   𝐢₂ = 0                           (Solution Current = 0)
     type(dual), dimension(N)               :: BC_EAST_
     type(dual), dimension(N), intent(in)   :: c_vars_dual, dcdx_vars_dual
 

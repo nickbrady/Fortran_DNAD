@@ -1,4 +1,4 @@
-! BAND_mod contains the subroutines that make up the numberical engine which solves these coupled non-linear PDE's
+! BAND_mod contains the subroutines that make up the numerical engine which solves these coupled non-linear PDE's
 ! They are written so that they are general for all problems and therefore rarely need to be modified
 !
 ! subroutine auto_fill needs to be "included" after module GOV_EQNS, because auto_fill has a "use GOV_EQNS" statement

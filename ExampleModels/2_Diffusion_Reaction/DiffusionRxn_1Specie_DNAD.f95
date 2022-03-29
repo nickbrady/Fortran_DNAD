@@ -14,6 +14,9 @@ module user_input
   integer, parameter :: Numbertimesteps = 30 * 3.6e3     ! Number of time steps
   real               :: delT = 1.0                       ! size of timestep [s]
   real               :: time                             ! [s]
+  logical            :: UPWIND = .FALSE.
+  character(len=65)  :: direction = ''
+
   real               :: xmax = 1e-4                      ! 500 um is 500e-4 cm
 
   real, parameter :: PI = 4.0 * ATAN(1.0)       ! pi - Geometric constant

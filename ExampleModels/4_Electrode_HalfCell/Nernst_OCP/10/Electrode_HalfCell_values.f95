@@ -4,6 +4,7 @@
 ! Incorporates DNAD which anables to use of automatic Differentiation to
 ! linearize the PDE's
 ! variables or names that begin and end with '_', i.e. _variable_ are changed by the python program: RunFortran.py
+! Comments that describe equations frequently use UNICODE characters to do so
 
 module user_input
   implicit none
@@ -13,6 +14,8 @@ module user_input
   integer, parameter :: Numbertimesteps = 3.6d3*1000     ! Number of time steps
   real               :: delT = 1e-0                       ! size of timestep [s]
   real               :: time                             ! [s]
+  logical            :: UPWIND = .FALSE.
+  character(len=65)  :: direction = ''
 
   ! **************************** Physical Constants ****************************
   real, parameter :: Rigc   = 8.314             ! Ideal gas constant [J/(mol*K)]

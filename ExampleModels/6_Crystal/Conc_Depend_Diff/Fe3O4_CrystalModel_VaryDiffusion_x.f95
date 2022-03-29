@@ -13,6 +13,8 @@ module user_input
   integer, parameter :: Numbertimesteps = 3.6d3*1000     ! Number of time steps
   real               :: delT = 1.0                       ! size of timestep [s]
   real               :: time                             ! [s]
+  logical            :: UPWIND = .FALSE.
+  character(len=65)  :: direction = ''
 
   ! **************************** Physical Constants ****************************
   real, parameter :: Rigc   = 8.314             ! Ideal gas constant [J/(mol*K)]

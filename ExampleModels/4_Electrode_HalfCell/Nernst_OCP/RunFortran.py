@@ -70,7 +70,7 @@ fortran_values = 'Electrode_HalfCell_values.f95'
 #p = call(['SortFortranModules.py', fortran_template])
 #_sorted_fortran_template = 'ReSort' + fortran_template
 
-c_rates = [1, 2, 4, 3, 5, 10, 20]#[10, 5, 4, 3, 2, 1]
+c_rates = [1, 2, 3, 4, 5, 10, 20]#[10, 5, 4, 3, 2, 1]
 for c_rate in c_rates:
 
     _source_tran = fortran_template #_sorted_fortran_template#'{}/{}'.format(cwd, _sorted_fortran_template)

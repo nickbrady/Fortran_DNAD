@@ -52,10 +52,12 @@ def sed(pattern, replace, source, dest=None, count=0):
     if not dest:
         shutil.move(name, source)
 
-def run_fortran(_run_file_=None):
+def run_fortran(_run_file_ = None):
+
     if _run_file_ == None:
         _run_file_ = glob.glob('*.f95')
         _run_file_ = _run_file_[0]
+        print(_run_file_)
 
     p = call(['gfortran', '-fdefault-real-8', '-O3', _run_file_])
     p = call(['./a.out'])
@@ -71,7 +73,7 @@ cwd = os.getcwd()
 try:
     fortran_template = sys.argv[1]
     run_fortran(fortran_template)
-except:
+except IndexError:
     run_fortran()
 
 # sort the modules in the fortran file

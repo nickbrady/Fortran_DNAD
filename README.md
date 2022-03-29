@@ -24,20 +24,29 @@ Simple Diffusion equation:
 * ∂c/∂t = D∇²c
 * 𝐍 = -D ∇c
 * R = 0
+* BC-WEST : cₒ = 1.0
+* BC-EAST : cₒ = 0.0
+
 
 `Flux_(1) = -diff * dc0dx`  <br>
 `Rxn_(1) = 0.0`             <br>
 `Accum_(1) = c0/delT`       <br>
+`BC_WEST_(1) = c0 - 1.0`    <br>
+`BC_EAST_(1) = c0 - 0.0`    <br>
 
 ***
 Diffusion-Reaction
 * ∂c/∂t = D∇²c
 * 𝐍 = -D ∇c
 * R = -kᵣₓ ⋅ c
+* BC-WEST : cₒ = cbulk
+* BC-EAST : 𝐍ₒ = 0
 
 `Flux_(1) = -diff * dc0dx`  <br>
 `Rxn_(1) = k_Rxn * c0`      <br>
 `Accum_(1) = c0/delT`       <br>
+`BC_WEST_(1) = c0 - cbulk`  <br>
+`BC_EAST_(1) = flux_temp(1) - 0.0`  <br>
 
 ***
 Battery Electrode Equations
@@ -46,6 +55,7 @@ Battery Electrode Equations
 * 0 = -∇⋅𝐢₁ - a iᵣₓ
 * 0 = -∇⋅𝐢₂ + a iᵣₓ
 
+<br>
 
 * (1) ϵ ∂cₒ/∂t = D∇²cₒ + a iᵣₓ / F
 * 𝐍ₒ = -ϵ * (D_Li * ∇cₒ + z_Li * u_Li * cₒ F ∇Φ₂)
@@ -56,6 +66,8 @@ Battery Electrode Equations
 `Flux_(1) = -porosity * (diff_Li * dc0dx + z_1 * u_1 * c0 * Fconst * dPhi_2dx)` <br>
 `Rxn_(1) = +volumetric_surface_area * i_rxn / Fconst` <br>
 `Accum_(1) = (porosity) * c0/delT` <br>
+`BC_WEST_(1) = c0 - cbulk` <br>
+`BC_EAST_(1) = flux_temp(1) - 0.0` <br>
 
 * (2) (1-ϵ) ∂cₓ/∂t = - a iᵣₓ / F
 * 𝐍ₓ = 0
@@ -66,6 +78,8 @@ Battery Electrode Equations
 `Flux_(2) = 0.0` <br>
 `Rxn_(2) = -volumetric_surface_area * i_rxn / Fconst` <br>
 `Accum_(2) = (1.0 - porosity) * c_x/delT` <br>
+`BC_WEST_(2) = accum_temp(2) - rxn_temp(2)` <br>
+`BC_EAST_(2) = accum_temp(2) - rxn_temp(2)` <br>
 
 
 * (3) 0 = -∇⋅𝐢₁ - a iᵣₓ
@@ -77,6 +91,8 @@ Battery Electrode Equations
 `Flux_(3) = -(1 - porosity) * sigma * dPhi_1dx` <br>
 `Rxn_(3) = -volumetric_surface_area * i_rxn` <br>
 `Accum_(3) = 0.0` <br>
+`BC_WEST_(3) = flux_temp(3) - 0.0` <br>
+`BC_EAST_(3) = flux_temp(3) - applied_current_A` <br>
 
 
 * (4) 0 = -∇⋅𝐢₂ + a iᵣₓ
@@ -88,6 +104,9 @@ Battery Electrode Equations
 `Flux_(4) = -porosity * ( Fconst * (z_1 * diff_Li + z_2 * diff_PF6) * dc0dx + (z_1**2 * u_1 + z_2**2 * u_2) * Fconst**2 * c0 * dPhi_2dx )` <br>
 `Rxn_(4) = +volumetric_surface_area * i_rxn` <br>
 `Accum_(4) = 0.0` <br>
+`BC_WEST_(4) = Phi_2 - 0.0` <br>
+`BC_EAST_(4) = flux_temp(4) - 0.0` <br>
+
 
 ## Code Structure
 Because Fortran necessitates that modules appear before subsequent modules that depend on them, `include` statements have been utilized to maintain this rigid ordering, while keeping the core subroutines and modules hidden from the general user.

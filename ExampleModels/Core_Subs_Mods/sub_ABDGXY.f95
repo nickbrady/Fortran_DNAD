@@ -35,7 +35,7 @@ subroutine ABDGXY(j)
       if (j.eq.1) then
         X = 0.0
         B = rj - (1.0 - alphaE)*fE + betaE*dE
-        D(1:N,1:N) = -alphaE*fE - betaE*dE
+        D(:,1:N) = -alphaE*fE - betaE*dE
         G = smG
 
         return
@@ -52,7 +52,7 @@ subroutine ABDGXY(j)
 
       A = (1.d0 - alphaW)*fW - betaW*dW
       B = rj + betaW*dW + alphaW*fW - (1.0 - alphaE)*fE + betaE*dE
-      D(1:N,1:N) = -alphaE*fE - betaE*dE
+      D(:,1:N) = -alphaE*fE - betaE*dE
       G = smG
 
       return

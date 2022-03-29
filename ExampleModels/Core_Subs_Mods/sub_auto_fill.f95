@@ -25,7 +25,7 @@
 ! At the boundaries ...
 
 subroutine auto_fill(j)
-  use user_input, only: N, NJ
+  use user_input, only: N, NJ, UPWIND, direction
   use GOV_EQNS
   use dnadmod
   use variables, only: alphaE, alphaW, betaE, betaW, &
@@ -65,8 +65,27 @@ subroutine auto_fill(j)
   !-----------------------------------------------------------------------------
   ! Calculate cW, cE, dcdxW, dcdxE
   !-----------------------------------------------------------------------------
+  if (UPWIND) then
+    if (trim(direction) == 'EastToWest') then
+      ! Upwind scheme - flow from East to West (negative current)
+      alphaW = 1.0
+      alphaE = 1.0
+    else if (trim(direction) == 'WestToEast') then
+      ! Upwind scheme - flow from West to East (positive current)
+      alphaW = 0.0
+      alphaE = 0.0
+    end if
+  else
+    if (j /= 1) then                          !-----------------------------------
+      alphaW = delx(j-1)/(delx(j-1)+delx(j))
+    end if
+    if (j /= NJ) then                         ! East Side Interface Variables:
+      alphaE = delx(j)/(delx(j+1)+delx(j))
+    end if
+  end if
+
   if (j /= 1) then                          !-----------------------------------
-    alphaW = delx(j-1)/(delx(j-1)+delx(j))  ! West Side Interface Variables:
+    ! alphaW = delx(j-1)/(delx(j-1)+delx(j))  ! West Side Interface Variables:
     betaW = 2.0/(delx(j-1)+delx(j))         ! cW, dcdxW
     do ic=1,N                               !-----------------------------------
       cW(ic)    = alphaW*cprev(ic,j) + (1.0 - alphaW)*cprev(ic,j-1)
@@ -77,7 +96,7 @@ subroutine auto_fill(j)
   end if
                                             !-----------------------------------
   if (j /= NJ) then                         ! East Side Interface Variables:
-    alphaE = delx(j)/(delx(j+1)+delx(j))    ! cE, dcdxE
+    ! alphaE = delx(j)/(delx(j+1)+delx(j))    ! cE, dcdxE
     betaE = 2.0/(delx(j)+delx(j+1))         !-----------------------------------
     do ic=1,N
       cE(ic)    = alphaE*cprev(ic,j+1) + (1.0 - alphaE)*cprev(ic,j)

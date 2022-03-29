@@ -70,11 +70,18 @@ subroutine auto_fill(j)
       ! Upwind scheme - flow from East to West (negative current)
       alphaW = 1.0
       alphaE = 1.0
+      if (j == 1) then
+        alphaE = delx(j)/(delx(j+1)+delx(j))
+      end if
     else if (trim(direction) == 'WestToEast') then
       ! Upwind scheme - flow from West to East (positive current)
       alphaW = 0.0
       alphaE = 0.0
+      if (j == NJ) then
+        alphaW = delx(j-1)/(delx(j-1)+delx(j))
+      end if
     end if
+
   else
     if (j /= 1) then                          !-----------------------------------
       alphaW = delx(j-1)/(delx(j-1)+delx(j))

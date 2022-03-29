@@ -16,6 +16,7 @@ module user_input
   logical            :: UPWIND = .TRUE.
   character(len=65)  :: direction = 'EastToWest'
 
+  real :: xmax          = 1.0              ! 500 um is 500e-4 cm
 
   ! **************************** Physical Constants ****************************
   real, parameter :: Rigc   = 8.314             ! Ideal gas constant [J/(mol*K)]
@@ -45,8 +46,6 @@ module user_input
   real :: diff_23 = 3e-7
 
   real :: cbulk = 1e-5
-
-  real :: xmax          = 1.0              ! 500 um is 500e-4 cm
 
   real :: applied_current_A = -1.0e-5
 
@@ -353,7 +352,7 @@ end module TRANSPORT_MODULE
 ! ******************************************************************************
 module write_data_mod
   use user_input
-  use variables, only: cprev, delC, xx
+  use variables, only: cprev, delC, xx, delX
   use TRANSPORT_MODULE
 
   implicit none
@@ -407,6 +406,7 @@ contains
     cA  = cprev(1,1)*1e3
     vel = cprev(2,NJ)
 
+    ! write(*, *) maxval(abs(cprev(2,:)))*density(cprev(1,NJ)) * delX(NJ/2),  diff_12
     write(*, data_fmt) state, t_write, cA, cprev(1,NJ)*1e3, cprev(2,1), cprev(2,NJ), cprev(2,1) * density(cprev(1,1)), &
     & cprev(2,NJ) * density(cprev(1,NJ))
 
@@ -433,7 +433,7 @@ contains
 
     do j = 1, NJ                                    !           !
       cA  = cprev(1,j)
-      vel = cprev(2,j)
+      vel = cprev(2,j)  * 1e7
       rho = density(cA)
       cB  = (rho - MW_A_LiTFSI * cA)/MW_B_EMITFSI
       wA  = MW_A_LiTFSI * cA / rho
@@ -524,12 +524,17 @@ contains
     ! Flux_(1) = -nu_A_Li * nu_B_TFSI * diff /(Rigc * Temp) * cA * du_A  &
     !          & + t_1_c * i_sol / (z_1_Li * Fconst) + nu_A_Li * cA * vel
     ! Flux of Li^+
+    ! 𝐍₁ = -νₐᴸ / MWₐ ρ D ∇ωₐ + t₁⋅𝐢₂ / (z₁ F) + νₐᴸ cₐ 𝐯
     Flux_(1) = -nu_A_Li / MW_A_LiTFSI * rho * diff * dwA_dx + &
               & (t_1_mass * i_sol) / (z_1_Li * Fconst) + nu_A_Li * cA * vel
     ! Flux_(2) = -nu_B_EMI / MW_B_EMITFSI * rho * diff * dwB_dx + &
     !           & t_2_mass / z_2_EMI * i_sol / Fconst + nu_B_EMI * cB * vel
     Flux_(2) = rho * vel
 
+    ! 𝐍₁ = -νₐᴸ / MWₐ ρ D ∇ωₐ + t₁⋅𝐢₂ / (z₁ F) + νₐᴸ cₐ 𝐯
+    ! 𝐍₂ = ρ𝐯
+    ! print*, Flux_(1)%dx(1)*c_vars_dual(1)%x, Flux_(1)%dx(N+1), &
+    ! & Flux_(1)%dx(1)*c_vars_dual(1)%x / abs(Flux_(1)%dx(N+1))
   end function FLUX
 
   function RXN(c_vars_dual) result(Rxn_)
@@ -548,8 +553,8 @@ contains
   end function RXN
 
   function ACCUM(c_vars_dual) result(Accum_)
-    ! (1) d(c_1)/dt = d(nu_1A * rho * w_A / MW_A)/dt = d(nu_1_A * cA)/dt
-    ! (2) d(rho)/dt
+    ! (1) ∂(c₁)/∂t = ∂(νₐᴸ ρ ωₐ / MWₐ)/∂t = ∂(νₐᴸ * cA)/∂t
+    ! (2) ∂ρ/∂t
     type(dual), dimension(N)              :: Accum_
     type(dual), dimension(N), intent(in)  :: c_vars_dual
     ! type(dual)                            :: cA, vel
@@ -585,7 +590,7 @@ contains
 ! dc_n%x = 0.0      -->   dc        -->           BC_WEST_(2) = dc_n/delT - rxn
   function Boundary_WEST (c_vars_dual, dcdx_vars_dual) result(BC_WEST_)
     ! (1)   z_1 N_1 = i/F
-    ! (2)   rho * vel = M_1 * i/(z1*F)
+    ! (2)   ρ𝐯 = MW_1 * i/(z1*F)
     type(dual), dimension(N)               :: BC_WEST_
     type(dual), dimension(N), intent(in)   :: c_vars_dual, dcdx_vars_dual
     type(dual), dimension(N)               :: flux_temp
@@ -597,7 +602,7 @@ contains
 
     flux_temp = FLUX(c_vars_dual, dcdx_vars_dual)
 
-    BC_WEST_(1) = flux_temp(1) - applied_current_A/(z_1_Li * Fconst)
+    BC_WEST_(1) = z_1_Li * flux_temp(1) - applied_current_A/(Fconst)
     ! BC_WEST_(2) = flux_temp(2) - 0.0
     BC_WEST_(2) = flux_temp(2) - MW_Li * applied_current_A/(z_1_Li * Fconst)
 
@@ -609,7 +614,7 @@ contains
 
   function Boundary_EAST (c_vars_dual, dcdx_vars_dual) result(BC_EAST_)
     ! (1)   z_1 N_1 = i/F
-    ! (2)   rho * vel = M_1 * i/(z1*F)
+    ! (2)   ρ𝐯 = MW_1 * i/(z1*F)
     type(dual), dimension(N)               :: BC_EAST_
     type(dual), dimension(N), intent(in)   :: c_vars_dual, dcdx_vars_dual
     type(dual), dimension(N)               :: flux_temp
@@ -625,8 +630,6 @@ contains
     ! BC_EAST_(2) = flux_temp(2) - 0.0
     BC_EAST_(2) = flux_temp(2) - MW_Li * applied_current_A/(z_1_Li * Fconst)
 
-    ! print*, BC_EAST_(2)
-    ! print*, flux_temp(2)
 
   end function Boundary_EAST
 

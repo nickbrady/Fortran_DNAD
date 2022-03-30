@@ -20,7 +20,7 @@ Finite Volume (Control Volume): <br>
 * ΔV ∂cᵢ/∂t = (Aₓᵢ⋅𝐍ᵢ - Aₓₒ⋅𝐍ₒ) + ΔV ⋅ Rⱼ    <br>
 
 ***
-Simple Diffusion equation:
+## Simple Diffusion equation:
 * ∂c/∂t = D∇²c
 * 𝐍 = -D ∇c
 * R = 0
@@ -35,7 +35,7 @@ Simple Diffusion equation:
 `BC_EAST_(1) = c0 - 0.0`    <br>
 
 ***
-Diffusion-Reaction
+## Diffusion-Reaction
 * ∂c/∂t = D∇²c
 * 𝐍 = -D ∇c
 * R = -kᵣₓ ⋅ c
@@ -49,7 +49,7 @@ Diffusion-Reaction
 `BC_EAST_(1) = flux_temp(1) - 0.0`  <br>
 
 ***
-Battery Electrode Equations
+## Battery Electrode Equations
 * ϵ ∂cₒ/∂t = D∇²cₒ + a iᵣₓ / F
 * (1-ϵ) ∂cₓ/∂t = - a iᵣₓ / F
 * 0 = -∇⋅𝐢₁ - a iᵣₓ
@@ -107,8 +107,33 @@ Battery Electrode Equations
 `BC_WEST_(4) = Phi_2 - 0.0` <br>
 `BC_EAST_(4) = flux_temp(4) - 0.0` <br>
 
+------------------------------------------------------------------------------------------------------------------------
+## Cooling Fluid in Pipe
+* ∂(ρc T)/∂t = -∇⋅(ρcT⋅𝐯) + h (T - Tₐ)
+* ∂ρ/∂t = -∇⋅(ρ𝐯)
+* BC-WEST :
+  * T = Tᵢ
+  * 𝐯 = vᵢ
+* BC-EAST :
+  * ∇T = 0      (Temperature does not change after exiting)
+  * ∇⋅(ρ𝐯) = 0  (ρ∇𝐯 + 𝐯⋅∇ρ = 0 ; ∇ρ = ∂ρ/∂T ∇T)
 
-## Code Structure
+(1) Energy balance <br>
+`Flux_(1) = c_heat_cap * density_ * Temp * vel` <br>
+`Rxn_(1) = -h_heat_transfer * (Temp - T_ambient)` <br>
+`Accum_(1) = c_heat_cap * density_ * Temp/delT` <br>
+`BC_WEST_(1) = Temp - T_in` <br>
+`BC_EAST_(1) = dTdx - 0.0` <br>
+
+(2) Continuity equation <br>
+`Flux_(2) = density_ * vel` <br>
+`Rxn_(2) = 0.0` <br>
+`Accum_(2) = density_/delT` <br>
+`BC_WEST_(2) = vel - vel_in` <br>
+`BC_EAST_(2) = density_%dx(1)*dTdx * vel + density_*dveldx - 0.0` <br>
+
+
+# Code Structure
 Because Fortran necessitates that modules appear before subsequent modules that depend on them, `include` statements have been utilized to maintain this rigid ordering, while keeping the core subroutines and modules hidden from the general user.
 (Previously, the python script `SortFortranModules.py` was written to re-order the modules and then run the programs.) <br>
 If one is not interested in using a python script to run the Fortran programs, one can elect to run the `.f95` files from the terminal by first compiling the program: `gfortran -fdefault-real-8 -O3 _file_name_` and then executing the program: `./a.out`

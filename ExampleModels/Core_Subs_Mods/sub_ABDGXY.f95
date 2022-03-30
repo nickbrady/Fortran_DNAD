@@ -28,7 +28,9 @@
 
 subroutine ABDGXY(j)
       use user_input, only: N, NJ
-      use variables, only: A, B, D, G, X, Y, alphaE, alphaW, betaE, betaW, rj, fE, fW, dE, dW, smG
+      use variables, only: A, B, D, G, X, Y, &
+                    & alphaE, alphaW, betaE, betaW, &
+                    & rj, fE, fW, dE, dW, smG, cprev, E
       implicit none
       integer :: j
 

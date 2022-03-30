@@ -223,7 +223,6 @@ contains
 
     Flux_(1) = c_heat_cap * density_ * Temp * vel
     Flux_(2) = density_ * vel
-    ! Flux_(2) = density_ * vel * dveldx
 
   end function FLUX
 
@@ -292,14 +291,11 @@ contains
 
     density_    = Density(Temp)
 
-    BC_EAST_(1) = dTdx - 0.0
-    BC_EAST_(2) = dveldx - 0.0
+    BC_EAST_(1) = dTdx - 0.0    ! temperature does not change past the exit
 
-    ! BC_EAST_(2) = density * vel * dveldx - 0.0
-
-    ! BC_EAST_(2) = vel - density_ / Density(cprev(1,1)) * cprev(2,1)
-
-    ! BC_EAST_(2) = vel * Density(cprev(1,NJ)) - Density(cprev(1,1)) * cprev(2,1)
+    ! ∇⋅(ρ𝐯) = 0 = 𝐯⋅∇ρ + ρ∇𝐯
+    ! ∇ρ = ∂ρ/∂T ⋅ ∇T
+    BC_EAST_(2) = density_%dx(1)*dTdx * vel + density_*dveldx - 0.0
 
 
   end function Boundary_EAST

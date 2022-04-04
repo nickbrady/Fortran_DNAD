@@ -1,13 +1,87 @@
-module number_of_variables
+module user_input
   implicit none
+
   integer, parameter :: N = 2
-end module number_of_variables
+  integer, parameter :: NJ = 101                          ! Number of mesh points
+  integer, parameter :: Numbertimesteps = 30 * 3.6e3     ! Number of time steps
+  integer, parameter :: maxIterations = 1e6
+  real               :: delT = 1.0e1                       ! size of timestep [s]
+  real               :: time                             ! [s]
+  real, parameter    :: xmax = 1.0                      ! 100 um
+
+  real, parameter :: Rigc   = 8.314             ! Ideal gas constant [J/(mol*K)]
+  real, parameter :: Fconst = 96485             ! Faraday's Constant [C/mol]
+  real, parameter :: Temp   = 298
+  real, parameter :: PI = 4.0 * ATAN(1.0)       ! pi - Geometric constant
+
+  real, parameter :: Diff = 1e-6
+
+  real, parameter :: z_1 = +1.0
+  real, parameter :: nu_1_A = 1.0
+  real, parameter :: MW_A = 2.0 ! g/cm3
+  real, parameter :: t_1 = 0.2
+
+  real, parameter :: z_2 = +1.0
+  real, parameter :: nu_2_B = 1.0
+  real, parameter :: MW_B = 2.0
+  real, parameter :: t_2 = 0.2
+
+  real, parameter :: density = 1.0              ! g/cm3
+  real, parameter :: eps = 1.0
+
+  real, parameter :: i_applied_cm2 = 0.0
+
+  character(len=65) :: geometry = 'Rectangular'   ! system Geometry: Rectangular, Cylindrical, Spherical
+
+end module user_input
+!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
+
+module variables
+  use user_input
+  implicit none
+
+  real, dimension(N, NJ)  :: cprev, delC
+  real, dimension(NJ)     :: xx, delX
+  real                    :: h
+
+  ! ABDGXY_VARS
+  real, dimension(N, N)     :: A, B, X, Y
+  real, dimension(N, 2*N+1) :: D
+  real, dimension(N)        :: G
+
+  ! BAND and MATINV variables
+  real, dimension(N, N+1, NJ) :: E
+  real, dimension(N)          :: ID
+  integer :: NP1
+
+end module variables
+!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
+
+module fluid_properties_mod
+  use user_input
+
+  implicit none
+
+  real, parameter :: aa = 0.51023262                 ! constant a for flow to a rotating disk
+  real, parameter :: bb = -0.61592201
+
+  ! contains
+  !
+  !   function Velocity(position_y)    Result(velocity_)
+  !     real              :: velocity_
+  !     real, intent(in)  :: position_y
+  !
+  !     velocity_ = -aa*omega*(omega/viscosity)**0.5 * position_y**2
+  !
+  !   end function Velocity
+
+end module fluid_properties_mod
 !*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
 
 module dnadmod
 
-    ! use user_input, only: N
-  use number_of_variables
+    use user_input, only: N
+  ! use number_of_variables
     implicit none
 
     integer, PARAMETER, public :: ndv = N*3   ! cprev_vars, dcdx_vars, d2cdx2_vars
@@ -15,6 +89,8 @@ module dnadmod
     private
 
     real :: negative_one = -1.0
+    real, parameter :: PI = 4.0 * ATAN(1.0)       ! pi - Geometric constant
+
     type,public :: dual  ! make this private will create difficulty to use the
                         ! original write/read commands, hence x and dx are
                         ! variables which can be accessed using D%x and D%dx in
@@ -1848,87 +1924,6 @@ contains
 end module dnadmod
 !*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
 
-module user_input
-  use number_of_variables
-  use dnadmod
-  implicit none
-
-  integer, parameter :: NJ = 21                          ! Number of mesh points
-  integer, parameter :: Numbertimesteps = 30 * 3.6e3     ! Number of time steps
-  integer, parameter :: maxIterations = 1e6
-  real               :: delT = 1.0e1                       ! size of timestep [s]
-  real               :: time                             ! [s]
-  real, parameter    :: xmax = 1.0                      ! 100 um
-
-  real, parameter :: Rigc   = 8.314             ! Ideal gas constant [J/(mol*K)]
-  real, parameter :: Fconst = 96485             ! Faraday's Constant [C/mol]
-  real, parameter :: Temp   = 298
-  real, parameter :: PI = 4.0 * ATAN(1.0)       ! pi - Geometric constant
-
-  real, parameter :: Diff = 1e-6
-
-  real, parameter :: z_1 = +1.0
-  real, parameter :: nu_1_A = 1.0
-  real, parameter :: MW_A = 2.0 ! g/cm3
-  real, parameter :: t_1 = 0.2
-
-  real, parameter :: z_2 = +1.0
-  real, parameter :: nu_2_B = 1.0
-  real, parameter :: MW_B = 2.0
-  real, parameter :: t_2 = 0.2
-
-  real, parameter :: density = 1.0              ! g/cm3
-  real, parameter :: eps = 1.0
-
-  real, parameter :: i_applied_cm2 = 0.0
-
-  character(len=65) :: geometry = 'Rectangular'   ! system Geometry: Rectangular, Cylindrical, Spherical
-
-end module user_input
-!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
-
-module variables
-  use user_input
-  implicit none
-
-  real, dimension(N, NJ)  :: cprev, delC
-  real, dimension(NJ)     :: xx, delX
-  real                    :: h
-
-  ! ABDGXY_VARS
-  real, dimension(N, N)     :: A, B, X, Y
-  real, dimension(N, 2*N+1) :: D
-  real, dimension(N)        :: G
-
-  ! BAND and MATINV variables
-  real, dimension(N, N+1, NJ) :: E
-  real, dimension(N)          :: ID
-  integer :: NP1
-
-end module variables
-!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
-
-module fluid_properties_mod
-  use user_input
-
-  implicit none
-
-  real, parameter :: aa = 0.51023262                 ! constant a for flow to a rotating disk
-  real, parameter :: bb = -0.61592201
-
-  ! contains
-  !
-  !   function Velocity(position_y)    Result(velocity_)
-  !     real              :: velocity_
-  !     real, intent(in)  :: position_y
-  !
-  !     velocity_ = -aa*omega*(omega/viscosity)**0.5 * position_y**2
-  !
-  !   end function Velocity
-
-end module fluid_properties_mod
-!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*
-
 module write_data_mod
   use user_input
   use variables, only: cprev, delC, xx
@@ -1966,14 +1961,13 @@ contains
 
   subroutine write_to_screen(it)
     integer :: it
-    real :: xi, zeta
 
     if (it == 0) then       ! write the headers on the first entrance into write all voltage
       write(*, header_fmt) 'Time',  'ω_A',  'vel', 'ω_A',  'vel'
       write(*, header_fmt) 'hours', '-', 'cm/s', '-', 'cm/s'
     end if
 
-      write(*, data_fmt) t_write, cprev(1,1), cprev(2,1), cprev(1,NJ), cprev(2,NJ)
+    write(*, data_fmt) t_write, cprev(1,1), cprev(2,1), cprev(1,NJ), cprev(2,NJ)
 
 
   end subroutine write_to_screen
@@ -1982,7 +1976,7 @@ contains
   subroutine write_positional_information_to_file(it)
     use variables, only: xx
     integer :: it, j
-    real :: xi, zeta
+    real :: w_A, vel
 
     open(56, file = 'Time_Conc_Position.txt', status = 'unknown')
 
@@ -1992,7 +1986,6 @@ contains
       write(56, header_fmt) 'hours', 'cm',      '-',    'cm/s'
                                                       !
     end if                                              !
-
 
     do j = 1, NJ                                    !
       w_A    = cprev(1,j)
@@ -2257,6 +2250,10 @@ end module GOV_EQNS
 ! linearize the PDE's
 ! variables or names that begin and end with '_', i.e. _variable_ are changed by the python program: RunFortran.py
 
+! module number_of_variables
+!   implicit none
+!
+! end module number_of_variables
 
 
 
@@ -2532,139 +2529,143 @@ subroutine ABDGXY(j)
 
 end subroutine ABDGXY
 
+! !------------------------------------------------------------------------------!
+! !*********************************** MATINV ***********************************!
+! !------------------------------------------------------------------------------!
+! SUBROUTINE MATINV(N, M, DETERM)
+!   use variables, only: A, B, delC, D, ID ! A imported but not used
+!   implicit double precision (A-H,O-Z) ! implicits are not good coding practice
+!  ! use variables, only: delC ! A imported but not used
+!  ! use ABDGXY_VARS, only: A, B, D
+!  ! implicit double precision (A-H,O-Z)
+!  ! real, dimension(N) :: ID
+!
+!       DETERM=1.0
+!       ! ID = 0.0
+!       DO 1 I=1,N
+! 1       ID(I)=0
+!       DO 18 NN=1,N
+!         BMAX=1.1
+!         DO 6 I=1,N
+!           IF (ID(I).NE.0) GOTO 6
+!           BNEXT=0.0
+!           BTRY=0.0
+!           DO 5 J=1,N
+!             IF (ID(J).NE.0) GOTO 5
+!             IF (ABS(B(I,J)).LE.BNEXT) GOTO 5
+!             BNEXT=ABS(B(I,J))
+!             IF (BNEXT.LE.BTRY) GOTO 5
+!             BNEXT=BTRY
+!             BTRY=ABS(B(I,J))
+!             JC=J
+! 5           CONTINUE
+!           IF (BNEXT.GE.BMAX*BTRY) GOTO 6
+!           BMAX=BNEXT/BTRY
+!           IROW=I
+!           JCOL=JC
+! 6       CONTINUE
+!         IF (ID(JC).EQ.0) GOTO 8
+!         DETERM=0.0
+!         RETURN
+! 8       ID(JCOL)=1
+!         IF (JCOL.EQ.IROW) GOTO 12
+! 9       DO 10 J=1,N
+!           SAVE=B(IROW,J)
+!           B(IROW,J)=B(JCOL,J)
+! 10        B(JCOL,J)=SAVE
+!         DO 11 K=1,M
+!           SAVE=D(IROW,K)
+!           D(IROW,K)=D(JCOL,K)
+! 11        D(JCOL,K)=SAVE
+! 12      F=1.0/B(JCOL,JCOL)
+!         DO 13 J=1,N
+! 13        B(JCOL,J)=B(JCOL,J)*F
+!         DO 14 K=1,M
+! 14        D(JCOL,K)=D(JCOL,K)*F
+!         DO 18 I=1,N
+!           IF (I.EQ.JCOL) GOTO 18
+!           F=B(I,JCOL)
+!           DO 16 J=1,N
+! 16          B(I,J)=B(I,J)-F*B(JCOL,J)
+!           DO 17 K=1,M
+! 17          D(I,K)=D(I,K)-F*D(JCOL,K)
+! 18    CONTINUE
+!       RETURN
+!       end
+!
+! !------------------------------------------------------------------------------!
+! !************************************ BAND ************************************!
+! !------------------------------------------------------------------------------!
+! SUBROUTINE BAND(J)
+! ! BAND(J) computes delC and calls MATINV to solve the problem using gaussian elimination.
+! use variables, only: A, B, delC, D, G, X, Y, NP1, E
+! ! use variables, only: delC
+! use user_input, only: N, NJ
+! ! use ABDGXY_VARS
+! ! use BAND_J_VARS
+! implicit double precision (A-H,O-Z)
+! ! integer :: NP1
+!
+! 101   FORMAT(15H DETERM=0 AT J=,I4)
+!       IF (J-2) 1,6,8
+! 1     NP1=N+1
+!       DO 2 I=1,N
+!         D(I,2*N+1)=G(I)
+!         DO 2 L=1,N
+!           LPN=L+N
+! 2         D(I,LPN)=X(I,L)
+!       CALL MATINV(N,2*N+1,DETERM)
+!       IF (DETERM) 4,3,4
+! 3     PRINT 101,J
+! 4     DO 5 K=1,N
+!         E(K,NP1,1)=D(K,2*N+1)
+!         DO 5 L=1,N
+!           E(K,L,1)=-D(K,L)
+!           LPN=L+N
+! 5         X(K,L)=-D(K,LPN)
+!       RETURN
+! 6     DO 7 I=1,N
+!         DO 7 K=1,N
+!           DO 7 L=1,N
+! 7           D(I,K)=D(I,K)+A(I,L)*X(L,K)
+! 8     IF (J-NJ) 11,9,9
+! 9     DO 10 I=1,N
+!         DO 10 L=1,N
+!           G(I)=G(I)-Y(I,L)*E(L,NP1,J-2)
+!           DO 10 M=1,N
+! 10          A(I,L)=A(I,L) + Y(I,M)*E(M,L,J-2)
+! 11    DO 12 I=1,N
+!         D(I,NP1)=-G(I)
+!         DO 12 L=1,N
+!           D(I,NP1)=D(I,NP1)+A(I,L)*E(L,NP1,J-1)
+!           DO 12 K=1,N
+! 12          B(I,K)=B(I,K) + A(I,L)*E(L,K,J-1)
+!       CALL MATINV(N,NP1,DETERM)
+!       IF (DETERM) 14,13,14
+! 13    PRINT 101,J
+! 14    DO 15 K=1,N
+!         DO 15 M=1,NP1
+! 15        E(K,M,J)=-D(K,M)
+!       IF (J-NJ) 20,16,16
+! 16    DO 17 K=1,N
+! 17      delC(K,J)=E(K,NP1,J)
+!       DO 18 JJ=2,NJ
+!         M=NJ-JJ+1
+!         DO 18 K=1,N
+!           delC(K,M)=E(K,NP1,M)
+!           DO 18 L=1,N
+! 18          delC(K,M)=delC(K,M) +E(K,L,M)*delC(L,M+1)
+!       DO 19 L=1,N
+!         DO 19 K=1,N
+! 19        delC(K,1)=delC(K,1)+X(K,L)*delC(L,3)
+! 20    RETURN
+!       end
+
 !------------------------------------------------------------------------------!
-!*********************************** MATINV ***********************************!
+!************************************ BAND and MATINV ************************************!
 !------------------------------------------------------------------------------!
-SUBROUTINE MATINV(N, M, DETERM)
-  use variables, only: A, B, delC, D, ID ! A imported but not used
-  implicit double precision (A-H,O-Z) ! implicits are not good coding practice
- ! use variables, only: delC ! A imported but not used
- ! use ABDGXY_VARS, only: A, B, D
- ! implicit double precision (A-H,O-Z)
- ! real, dimension(N) :: ID
-
-      DETERM=1.0
-      ! ID = 0.0
-      DO 1 I=1,N
-1       ID(I)=0
-      DO 18 NN=1,N
-        BMAX=1.1
-        DO 6 I=1,N
-          IF (ID(I).NE.0) GOTO 6
-          BNEXT=0.0
-          BTRY=0.0
-          DO 5 J=1,N
-            IF (ID(J).NE.0) GOTO 5
-            IF (ABS(B(I,J)).LE.BNEXT) GOTO 5
-            BNEXT=ABS(B(I,J))
-            IF (BNEXT.LE.BTRY) GOTO 5
-            BNEXT=BTRY
-            BTRY=ABS(B(I,J))
-            JC=J
-5           CONTINUE
-          IF (BNEXT.GE.BMAX*BTRY) GOTO 6
-          BMAX=BNEXT/BTRY
-          IROW=I
-          JCOL=JC
-6       CONTINUE
-        IF (ID(JC).EQ.0) GOTO 8
-        DETERM=0.0
-        RETURN
-8       ID(JCOL)=1
-        IF (JCOL.EQ.IROW) GOTO 12
-9       DO 10 J=1,N
-          SAVE=B(IROW,J)
-          B(IROW,J)=B(JCOL,J)
-10        B(JCOL,J)=SAVE
-        DO 11 K=1,M
-          SAVE=D(IROW,K)
-          D(IROW,K)=D(JCOL,K)
-11        D(JCOL,K)=SAVE
-12      F=1.0/B(JCOL,JCOL)
-        DO 13 J=1,N
-13        B(JCOL,J)=B(JCOL,J)*F
-        DO 14 K=1,M
-14        D(JCOL,K)=D(JCOL,K)*F
-        DO 18 I=1,N
-          IF (I.EQ.JCOL) GOTO 18
-          F=B(I,JCOL)
-          DO 16 J=1,N
-16          B(I,J)=B(I,J)-F*B(JCOL,J)
-          DO 17 K=1,M
-17          D(I,K)=D(I,K)-F*D(JCOL,K)
-18    CONTINUE
-      RETURN
-      end
-
-!------------------------------------------------------------------------------!
-!************************************ BAND ************************************!
-!------------------------------------------------------------------------------!
-SUBROUTINE BAND(J)
-! BAND(J) computes delC and calls MATINV to solve the problem using gaussian elimination.
-use variables, only: A, B, delC, D, G, X, Y, NP1, E
-! use variables, only: delC
-use user_input, only: N, NJ
-! use ABDGXY_VARS
-! use BAND_J_VARS
-implicit double precision (A-H,O-Z)
-! integer :: NP1
-
-101   FORMAT(15H DETERM=0 AT J=,I4)
-      IF (J-2) 1,6,8
-1     NP1=N+1
-      DO 2 I=1,N
-        D(I,2*N+1)=G(I)
-        DO 2 L=1,N
-          LPN=L+N
-2         D(I,LPN)=X(I,L)
-      CALL MATINV(N,2*N+1,DETERM)
-      IF (DETERM) 4,3,4
-3     PRINT 101,J
-4     DO 5 K=1,N
-        E(K,NP1,1)=D(K,2*N+1)
-        DO 5 L=1,N
-          E(K,L,1)=-D(K,L)
-          LPN=L+N
-5         X(K,L)=-D(K,LPN)
-      RETURN
-6     DO 7 I=1,N
-        DO 7 K=1,N
-          DO 7 L=1,N
-7           D(I,K)=D(I,K)+A(I,L)*X(L,K)
-8     IF (J-NJ) 11,9,9
-9     DO 10 I=1,N
-        DO 10 L=1,N
-          G(I)=G(I)-Y(I,L)*E(L,NP1,J-2)
-          DO 10 M=1,N
-10          A(I,L)=A(I,L) + Y(I,M)*E(M,L,J-2)
-11    DO 12 I=1,N
-        D(I,NP1)=-G(I)
-        DO 12 L=1,N
-          D(I,NP1)=D(I,NP1)+A(I,L)*E(L,NP1,J-1)
-          DO 12 K=1,N
-12          B(I,K)=B(I,K) + A(I,L)*E(L,K,J-1)
-      CALL MATINV(N,NP1,DETERM)
-      IF (DETERM) 14,13,14
-13    PRINT 101,J
-14    DO 15 K=1,N
-        DO 15 M=1,NP1
-15        E(K,M,J)=-D(K,M)
-      IF (J-NJ) 20,16,16
-16    DO 17 K=1,N
-17      delC(K,J)=E(K,NP1,J)
-      DO 18 JJ=2,NJ
-        M=NJ-JJ+1
-        DO 18 K=1,N
-          delC(K,M)=E(K,NP1,M)
-          DO 18 L=1,N
-18          delC(K,M)=delC(K,M) +E(K,L,M)*delC(L,M+1)
-      DO 19 L=1,N
-        DO 19 K=1,N
-19        delC(K,1)=delC(K,1)+X(K,L)*delC(L,3)
-20    RETURN
-      end
-
-
+include '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/sub_MATINV.f95'
+include '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/sub_BAND.f95'
 
 !******************************************************************************
 !* dual Number Automatic Differentiation (DNAD) of Fortran Codes

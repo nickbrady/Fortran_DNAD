@@ -2,7 +2,7 @@ module user_input
   implicit none
 
   integer, parameter :: N = 3   ! LiPF6 salt concentration, mass-average velocity
-  integer, parameter :: NJ = 12                          ! Number of mesh points
+  integer, parameter :: NJ = 42                          ! Number of mesh points
   integer, parameter :: Numbertimesteps = 1e3*3600 !3.6d3*1000     ! Number of time steps
   real               :: delT = 1e0                       ! size of timestep [s]
   real               :: time                             ! [s]

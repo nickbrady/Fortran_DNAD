@@ -371,7 +371,7 @@ contains
 
     ! if (state == 'D') then
       vel_1  = cprev(2,1)
-      vel_NJ = cprev(2,NJ-1)
+      vel_NJ = cprev(2,NJ)
     ! else if (state == 'R') then
     !   vel_1  = cprev(2,2)
     !   vel_NJ = cprev(2,NJ)
@@ -465,6 +465,20 @@ module GOV_EQNS
   type(dual) :: vel_mass_avg
   type(dual) :: c_LiPF6, dcdx_LiPF6
   type(dual) :: density_, d_density_dx
+
+! (1) ∂cₑ/∂t = ∂(ρωₑ/MWₑ)/∂t
+! 𝐍₁ = -ρ/MWₑ Dᴸⁱ∇ωₑ + ωₑρ/MWₑ 𝐯
+! (2) ∂ρ/∂t = -∇⋅(ρ𝐯)
+! 𝐍₂ = ρ𝐯
+
+! Boundary Conditions West (j=1)
+! (1) N₁ = 𝐢/F
+! (2) 𝐍₂ = 𝐍₁ * MWₑ
+
+! Boundary Conditions East (j=NJ)
+! (1) N₁ = 𝐢/F
+! (2) 𝐍₂ = ρ𝐯
+
 contains
 
 ! ******************************************************************************
@@ -577,10 +591,10 @@ contains
     c_LiPF6     = c_vars_dual(1)
     dcdx_LiPF6  = dcdx_vars_dual(1)
     density_    = density(c_LiPF6)
-    d_density_dx = density_%dx(1) * dcdx_LiPF6  ! ∇ρ = ∂ρ/∂c ∇c
+    d_density_dx = density_%dx(1) * dcdx_LiPF6  ! ∇ρ = ∂ρ/∂c ∇c ; more general ∇ρ = ∑(∂ρ/∂cᵢ ∇cᵢ)
 
     BC_EAST_(1) = flux_temp(1) - i_app_cm2/Fconst
-    BC_EAST_(2) = flux_temp(2) - flux_temp(1)*MW_e
+    ! BC_EAST_(2) = flux_temp(2) - flux_temp(1)*MW_e
     BC_EAST_(2) = d_density_dx*vel + density_ * dveldx  ! ∇⋅(ρ𝐯) = 𝐯⋅∇ρ + ρ∇𝐯
 
   end function Boundary_EAST

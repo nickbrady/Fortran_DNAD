@@ -1,0 +1,691 @@
+%\documentclass[12pt]{amsart}
+
+\documentclass[12pt]{article}
+\usepackage{url}
+\usepackage[margin=0.8in]{geometry}
+\geometry{a4paper}
+\usepackage[pdftex]{graphicx}
+\usepackage{subfigure}
+\usepackage[font={footnotesize},labelfont=bf]{caption}
+\usepackage{flushend}
+\usepackage{qtree}
+\usepackage[sort&compress,numbers,super]{natbib}
+
+
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage{amssymb}
+% \usepackage[T1]{fontenc} % font encoding
+% \usepackage[utf8]{inputenc} % input encoding
+% \usepackage[english]{babel} % keyword translation and hyphenation
+% \usepackage{lmodern} % lmodern looks better than cm-super
+
+\usepackage{wrapfig}
+\usepackage{dblfloatfix}
+\usepackage{textgreek}
+\usepackage{enumitem}
+\usepackage[parfill]{parskip}
+\graphicspath{ {"/Users/nicholasbrady/Google Drive/School/Academic/West Research/Projects/Data Science/PaperFigures/"} }
+\usepackage{makecell}
+\usepackage{setspace}
+% \doublespacing
+\usepackage{placeins}
+%\usepackage[outdir=./]{epstopdf}
+\usepackage{epstopdf}
+\usepackage{authblk}
+% \usepackage{changes}
+\usepackage{color,soul}
+\usepackage{xcolor}
+\usepackage{chemformula}
+\usepackage{chemist}
+%
+% \usepackage[makeroom]{cancel}
+
+\newcommand{\flux}{\mathrm{\mathbf{N}}}
+\newcommand{\vel}{\mathrm{\mathbf{v}}}
+\newcommand{\solcur}{\mathrm{\mathbf{i}}}
+\newcommand{\scrD}{\mathscr{D}}
+\DeclareMathOperator\erf{erf}
+\DeclareMathOperator\erfc{erfc}
+
+\pagecolor{black}
+\color{white}
+
+%% Uncomment to print
+% \pagecolor{white}
+% \color{black}
+
+
+
+\title{Equations for Brian Tackett's \ch{CO2} Reduction}
+
+\author[1]{Nicholas W. Brady}
+\affil[1]{University of Hasselt, Hasselt 3500, Belgium}
+
+\begin{document}
+
+	\maketitle
+
+	\clearpage
+
+  Based on Mathematical Modeling of \ch{CO2} Reduction to CO in Aqueous Electrolytes: I. Kinetic Study on Planar Silver and Gold Electrodes by Charles Delacourt, Paul L. Ridgway, and John Newman
+
+  \begin{equation} \label{eq:RDS_CER}
+    \text{CO}_2 + \text{e}^- \ (+ \Gamma \ ) \rightarrow \text{CO}^-_{2(\text{ads})}
+  \end{equation}
+
+  \begin{equation} \label{eq:equil_CER}
+    \text{CO}_{2(\text{ads})}^{\bullet} + \text{H}_2\text{O} + \text{e}^- \rightarrow \text{CO}_{(g)} + 2\text{OH}^- \ (+ \Gamma \ )
+  \end{equation}
+
+  \begin{equation} \label{eq:RDS_HER}
+    \text{H}_2\text{O} + \text{e}^- \ (+ \Gamma \ ) \rightarrow \text{H}^{\bullet}_{(\text{ads})} + \text{OH}^-
+  \end{equation}
+
+  \begin{equation} \label{eq:equil_HER}
+    \text{H}^{\bullet}_{(\text{ads})} + \text{H}_2\text{O} + \text{e}^- \rightarrow \text{H}_{2(\text{g})} + \text{OH}^- \ (+ \Gamma \ )
+  \end{equation}
+
+  Equations \ref{eq:RDS_CER} and \ref{eq:RDS_HER} are assumed to be the slow rate-determining steps, while equations \ref{eq:equil_CER} and \ref{eq:equil_HER} are assumed to be fast and equilibrated. The process for developing electrochemical reaction expressions for these processes is established in Chapter 8.3 of \underline{Electrochemical Systems} (pages 217  - 225) and is recapitulated here.
+
+  \begin{enumerate}
+    \item Assume the fast reaction step is at equilibrium, $r_{fast} = 0$ and use this relation to establish a site balance, $\theta_i$
+    \item Assuming the rate-determining step to be at open-circuit potential $U_i$, $r_{rds} = 0$ establish a Nernstian potential relationship. This Nernstian potential relationship should be in agreement with standard overall reaction equations
+    \item Using the established open-circuit potential relationship, develop an expression for the exchange-current density, $i_{i,\circ}$.
+  \end{enumerate}
+
+  Using the reactions listed in Table II, gives the Nernstian relation for the open-circuit potential, for HER and CER, respectively.
+  \begin{center}
+    \ch{2 H+ + 2 e- <=> H_{2(g)}}
+  \end{center}
+
+  \begin{equation}
+    U_H = U_{H,ref} - \frac{RT}{n_H F} \ln{ \left( \frac{P_{H_2}}{[H^+]^2}  \right)}
+  \end{equation}
+
+
+  \hfill \\
+  \begin{center}
+    \ch{CO2 + 2 H+ + 2 e- <=> CO_{(g)} + H2O_{(l)} }
+  \end{center}
+
+  \begin{equation}
+    U_C = U_{C,ref} - \frac{RT}{n_C F} \ln{ \left( \frac{\text{P}_{\text{CO}}}{[\text{CO}_2][\text{H}^+]^2} \right)}
+  \end{equation}
+
+  \clearpage
+  \clearpage
+  \textbf{CER}\\
+  Reaction 1 - (slow) rate-determining step
+  \begin{equation*}
+    \text{CO}_2 + \text{e}^- \ (+ \Gamma \ ) \rightarrow \text{CO}^-_{2(\text{ads})}
+  \end{equation*}
+
+  Reaction 2 - (fast) equilibrated reaction
+  \begin{equation*}
+    \text{CO}_{2(\text{ads})}^{\bullet} + \text{H}_2\text{O} + \text{e}^- \rightarrow \text{CO}_{(g)} + 2\text{OH}^- \ (+ \Gamma \ )
+  \end{equation*}
+
+  \textbf{Site Balance}\\
+  Assume equation \ref{eq:equil_CER} is equilibrated to establish a site balance
+  \begin{gather*}
+    r_2 = 0 = k_{2c} \left[\Gamma_{\max} \theta_C \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{2a} \text{P}_{\text{CO}} \left[\text{OH}^- \right]^2
+    \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+    \exp{ \left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    \frac{\theta_C}{1 - \theta_C - \theta_H} = \frac{k_{2a}}{k_{2c}} \text{P}_{\text{CO}} \left[\text{OH}^- \right]^2 \exp{ \left( \frac{F V}{RT} \right)}
+  \end{gather*}
+
+  \textbf{Open-Circuit Potential, $U_1$} (should there be a two in here somewhere?)\\
+  When $V = U_1$, $r_1 = 0$.
+  \begin{equation*}
+    r_1 = k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+  \end{equation*}
+
+  \begin{equation*}
+  \begin{split}
+    0 &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_1}{RT} \right)}
+    - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F U_1}{RT} \right)}
+    \\
+    \exp{ \left( \frac{FU_1}{RT} \right)} &=
+    \frac{k_{1c}}{k_{1a}} [{\text{CO}_2}] \frac{(1 - \theta_C - \theta_H)}{\theta_C}
+    \\
+    \exp{ \left( \frac{FU_1}{RT} \right)} &=
+    \frac{k_{1c}}{k_{1a}} [{\text{CO}_2}] \left[ \frac{k_{2a}}{k_{2c}} \text{P}_{\text{CO}} \left[\text{OH}^- \right]^2 \exp{ \left( \frac{F V}{RT} \right)} \right]^{-1}
+    \\
+    U_1 &= \frac{RT}{F} \ln{ \left( \frac{k_{1c}}{k_{1a}} \frac{k_{2c}}{k_{2a}} \exp{ \left( \frac{-F V}{RT} \right)}
+    \frac{[{\text{CO}_2}]}{\text{P}_{\text{CO}} \left[\text{OH}^- \right]^2} \right)}
+    \\
+    [\text{OH}^-] &= K_{pH} / [\text{H}^+]
+    \\
+    U_1 &= \frac{RT}{F} \ln{ \left( \frac{k_{1c}}{k_{1a}} \frac{k_{2c}}{k_{2a}} \exp{ \left( \frac{-F V}{RT} \right)} \frac{1}{K_{pH}}
+    \frac{[{\text{CO}_2}][\text{H}^+]^2}{\text{P}_{\text{CO}}} \right)}
+    \\
+    U_{1,ref} &= \frac{RT}{F} \ln{ \left( \frac{k_{1c}}{k_{1a}} \frac{k_{2c}}{k_{2a}} \exp{ \left( \frac{-F V}{RT} \right)} \frac{1}{K_{pH}} \right) }
+    \\
+    U_1 &= U_{1,ref} + \frac{RT}{F} \ln{ \left( \frac{[{\text{CO}_2}][\text{H}^+]^2}{\text{P}_{\text{CO}}} \right)}
+  \end{split}
+  \end{equation*}
+
+  It can be seen that $U_1$ does have the correct Nernstian relationship with respect to the species
+
+  \clearpage
+  \textbf{Exchange-Current Density, $i_{1,\circ}$} \\
+  substitute $ \eta_1 = V - U_1$ $\rightarrow$ $ V = \eta_1 + U_1$
+  \begin{equation*}
+  \begin{split}
+    r_1 &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F (\eta_1 + U_1)}{RT} \right)}
+    - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F (\eta_1 + U_1)}{RT} \right)}
+    \\
+    r_1 &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F \eta_1}{RT} \right)} \exp{ \left( \frac{-\alpha_c F U_1}{RT} \right)} \\
+    & \quad - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F \eta_1}{RT} \right)} \exp{\left( \frac{\alpha_a F U_1}{RT} \right)}
+    \\
+    \frac{i_1}{F} &= i_{1,\circ} \left[ \exp{\left( \frac{-\alpha_c F \eta_1}{RT} \right)} -\exp{\left( \frac{\alpha_a F \eta_1}{RT} \right)}  \right]
+  \end{split}
+  \end{equation*}
+
+  \begin{equation*}
+  \begin{split}
+    i_{1,\circ} &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_1}{RT} \right)}
+    = k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F U_1}{RT} \right)}
+    \\
+    & = k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \left( \frac{k_{1c}}{k_{1a}} [{\text{CO}_2}] \frac{(1 - \theta_C - \theta_H)}{\theta_C} \right)^{-\alpha_c}
+    \\
+    & = k_{1c}^{(1-\alpha_c)} k_{1a}^{\alpha_c} [{\text{CO}_2}]^{(1-\alpha_c)} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{(1-\alpha_c)} \theta_C^{\alpha_c} \right]
+    \\
+    & = k_{1c}^{\alpha_a} k_{1a}^{\alpha_c} [{\text{CO}_2}]^{\alpha_a} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{\alpha_a} \theta_C^{\alpha_c} \right]
+    \end{split}
+  \end{equation*}
+
+  \begin{equation*}
+  \begin{split}
+    i_{1,\circ} &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_1}{RT} \right)}
+    = k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F U_1}{RT} \right)}
+    \\
+    & = k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F}{RT} \frac{RT}{F}
+    \ln{ \left( \frac{k_{1c}}{k_{1a}} \frac{k_{2c}}{k_{2a}} \exp{ \left( \frac{-F V}{RT} \right)} \frac{1}{K_{pH}}
+    \frac{[{\text{CO}_2}][\text{H}^+]^2}{\text{P}_{\text{CO}}} \right)} \right)}
+    \\
+    &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \left[ \frac{k_{1c}}{k_{1a}} \frac{k_{2c}}{k_{2a}} \exp{ \left( \frac{-F V}{RT} \right)} \frac{1}{K_{pH}}
+    \frac{[{\text{CO}_2}][\text{H}^+]^2}{\text{P}_{\text{CO}}} \right]^{-\alpha_c}
+    \\
+    &= k_{1c}^{(1-\alpha_c)} k_{1a}^{\alpha_c} k_{2c}^{-\alpha_c} k_{2a}^{\alpha_c} K_{pH}^{\alpha_c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \cdot \exp{\left(\frac{\alpha_c F V}{RT} \right)}
+    [{\text{CO}_2}]^{(1-\alpha_c)} \left(\text{P}_{\text{CO}}\right)^{\alpha_c} [{\text{H}^+}]^{-2\alpha_c}
+    \end{split}
+  \end{equation*}
+
+  \clearpage
+  \textbf{HER} \\
+  Reaction 3 - (slow) rate-determining step
+  \begin{equation*}
+    \text{H}_2\text{O} + \text{e}^- \ (+ \Gamma \ ) \rightarrow \text{H}^{\bullet}_{(\text{ads})} + \text{OH}^-
+  \end{equation*}
+
+  Reaction 4 - (fast) equilibrated reaction
+  \begin{equation*}
+    \text{H}^{\bullet}_{(\text{ads})} + \text{H}_2\text{O} + \text{e}^- \rightarrow \text{H}_{2(\text{g})} + \text{OH}^- \ (+ \Gamma \ )
+  \end{equation*}
+
+  \textbf{Site Balance} \\
+  Assume equation \ref{eq:equil_HER} is equilibrated to establish a site balance
+  \begin{gather*}
+    r_4 = 0 = k_{4c} \left[\Gamma_{\max} \theta_H \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    \frac{\theta_H}{1 - \theta_C - \theta_H} = \frac{k_{4a}}{k_{4c}} \text{P}_{\text{H}_2} \left[\text{OH}^- \right]
+    \exp{\left( \frac{ F V}{RT} \right)}
+  \end{gather*}
+
+  \textbf{Open-Circuit Potential, $U_3$}\\
+  When $V = U_3$, $r_3 = 0$.
+  \begin{equation*}
+    r_3 = k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+  \end{equation*}
+
+  \begin{equation*}
+  \begin{split}
+    0 &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_3}{RT} \right)}
+    - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F U_3}{RT} \right)}
+    \\
+    \exp{ \left( \frac{FU_3}{RT} \right)} &=
+    \frac{k_{3c}}{k_{3a}} \left[\text{OH}^- \right]^{-1} \frac{(1 - \theta_C - \theta_H)}{\theta_H}
+    \\
+    \exp{ \left( \frac{FU_3}{RT} \right)} &=
+    \frac{k_{3c}}{k_{3a}} \left[\text{OH}^- \right]^{-1} \left[ \frac{k_{4a}}{k_{4c}} \text{P}_{\text{H}_2} \left[\text{OH}^- \right]
+    \exp{\left( \frac{ F V}{RT} \right)} \right]^{-1}
+    \\
+    U_3 &= \frac{RT}{F} \ln{\left( \frac{k_{3c}}{k_{3a}} \frac{k_{4c}}{k_{4a}} \frac{1}{\text{P}_{\text{H}_2} \left[\text{OH}^- \right]^{2}}
+    \exp{\left( \frac{- F V}{RT} \right)} \right)}
+    \\
+    U_3 &= \frac{RT}{F} \ln{\left( \frac{k_{3c}}{k_{3a}} \frac{k_{4c}}{k_{4a}}\frac{1}{K_{pH}} \exp{\left( \frac{- F V}{RT} \right)}
+    \frac{\left[\text{H}^+ \right]^{2}}{\text{P}_{\text{H}_2} } \right)}
+    \\
+    U_3 &= U_{3,ref} + \frac{RT}{F} \ln{\left(
+    \frac{\left[\text{H}^+ \right]^{2}}{\text{P}_{\text{H}_2} } \right)}
+    \\
+    U_{3,ref} &= \frac{RT}{F} \ln{\left( \frac{k_{3c}}{k_{3a}} \frac{k_{4c}}{k_{4a}}\frac{1}{K_{pH}} \exp{\left( \frac{- F V}{RT} \right)} \right)}
+  \end{split}
+  \end{equation*}
+
+  \clearpage
+  \textbf{Exchange-Current Density, $i_{3,\circ}$} \\
+  substitute $ \eta_3 = V - U_3$ $\rightarrow$ $ V = \eta_3 + U_3$
+  \begin{equation*}
+  \begin{split}
+    r_3 &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F (\eta_3 + U_3)}{RT} \right)}
+    - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F (\eta_3 + U_3)}{RT} \right)}
+    \\
+    r_3 &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F \eta_3}{RT} \right)} \exp{ \left( \frac{-\alpha_c F U_3}{RT} \right)} \\
+    & \quad - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F \eta_3}{RT} \right)} \exp{\left( \frac{\alpha_a F U_3}{RT} \right)}
+    \\
+    \frac{i_3}{F} &= i_{3, \circ} \left[ \exp{\left( \frac{-\alpha_c F \eta_3}{RT} \right)} -\exp{\left( \frac{\alpha_a F \eta_3}{RT} \right)}  \right]
+  \end{split}
+  \end{equation*}
+
+  \begin{equation*}
+  \begin{split}
+    i_{3, \circ} &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_3}{RT} \right)}
+    = k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right] \exp{\left( \frac{\alpha_a F U_3}{RT} \right)}
+    \\
+    & = k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+    \left( \frac{k_{3c}}{k_{3a}} \frac{(1 - \theta_C - \theta_H)}{\theta_H} \left[\text{OH}^- \right]^{-1} \right)^{-\alpha_c}
+    \\
+    & = k_{3c}^{(1-\alpha_c)} k_{3a}^{\alpha_c} \left[\text{OH}^- \right]^{\alpha_c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{(1-\alpha_c)} \theta_H^{\alpha_c} \right]
+    \\
+    & = k_{3c}^{\alpha_a} k_{3a}^{\alpha_c} \left[\text{OH}^- \right]^{\alpha_c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{\alpha_a} \theta_H^{\alpha_c} \right]
+    \end{split}
+  \end{equation*}
+
+  \clearpage
+  In the paper, NONE of this development for site balances, exchange current density, or open-circuit potential is used.
+
+  \begin{table}[h]
+  \setcellgapes{5pt}
+  \makegapedcells
+  \centering
+  % 	\begingroup
+  % 	\addtolength{\jot}{0.5em}
+    $\begin{array}{| c | c | c |}
+    \hline
+    \text{\textbf{Eq. \#}} & \text{\textbf{In Paper}} & \text{\textbf{Alternative Form}} \\
+    \hline
+
+    [1] &
+    \text{CO}_2 + \text{e}^- \ (+ \Gamma \ ) \rightarrow \text{CO}^-_{2(\text{ads})} &
+    --- \\
+    \hline
+
+    [2] &
+    \text{CO}_{2(\text{ads})}^{-} + \text{H}_2\text{O} + \text{e}^- \rightarrow \text{CO}_{(g)} + 2\text{OH}^- \ (+ \Gamma \ ) &
+    \text{CO}_{2(\text{ads})}^{-} + \text{H}^+ + \text{e}^- \rightarrow \text{CO}_{(g)} + \text{OH}^- \ (+ \Gamma \ )
+    \\
+    \hline
+
+    [3] &
+    \text{H}_2\text{O} + \text{e}^- \ (+ \Gamma \ ) \rightarrow \text{H}^{\bullet}_{(\text{ads})} + \text{OH}^- &
+    \text{H}^+ + \text{e}^- \ (+ \Gamma \ ) \rightarrow \text{H}^{\bullet}_{(\text{ads})} \\
+    \hline
+
+    [4] &
+    \text{H}^{\bullet}_{(\text{ads})} + \text{H}_2\text{O} + \text{e}^- \rightarrow \text{H}_{2(\text{g})} + \text{OH}^- \ (+ \Gamma \ ) &
+    \text{H}^{\bullet}_{(\text{ads})} + \text{H}^+ + \text{e}^- \rightarrow \text{H}_{2(\text{g})} \ (+ \Gamma \ ) \\
+    \hline
+
+    \end{array}$
+  \end{table}
+
+  The alternate forms of the above equations emphasize the consumption of \ch{H+}, while the forms in the paper seem to indicate that the reactions consume \ch{H2O} which is in abundance. The Tafel expression for the Volmer Reaction (equation \ref{eq:RDS_HER}) is of particular importance because it is the rate-determining step for HER.
+
+  \begin{table}[h]
+	\setcellgapes{5pt}
+	\makegapedcells
+	\centering
+		\begingroup
+		\addtolength{\jot}{0.5em}
+		$\begin{array}{ | c | c | }
+		\hline
+		\text{In Paper} & \text{Alternative Form}
+		\\
+		\hline
+			\multicolumn{1}{| c |}{ % Molar Average Velocity
+				\begin{aligned}
+          \flux_{\text{CO}_2} &= - R_1 \\
+          \flux_{\text{OH}^-} &= +2R_2 + R_3 + R_4 \\
+          \flux_{\text{K}^+} &= 0 \\
+          K_5 &= \frac{[\text{CO}_2] [\text{H}_2\text{O}]}{[\text{HCO}_3^-] [\text{H}^+]} \\
+          K_6 &= \frac{[\text{HCO}_3^-]}{[\text{CO}_3^{-2}] [\text{H}^+]} \\
+          K_{pH} &= \frac{1}{[\text{H}^+] [\text{OH}^-]} \\
+          \sum_i z_i c_i &= 0
+					\\
+				\end{aligned}
+			}
+		&
+			\multicolumn{1}{c |}{ % Mass Average Velocity
+				\begin{aligned}
+          \flux_{\text{CO}_2} &= - R_1 \\
+          \flux_{\text{H}^+} &= - R_2 - R_3 - R_4 \\
+          \flux_{\text{OH}^-} &= +R_2 \\
+          \flux_{\text{K}^+} &= 0 \\
+          K_5 &= \frac{[\text{CO}_2] [\text{H}_2\text{O}]}{[\text{HCO}_3^-] [\text{H}^+]} \\
+          K_6 &= \frac{[\text{HCO}_3^-]}{[\text{CO}_3^{-2}] [\text{H}^+]} \\
+          K_{pH} &= \frac{1}{[\text{H}^+] [\text{OH}^-]} \\
+          \sum_i z_i c_i &= 0
+          \\
+				\end{aligned}
+			}
+
+		\\
+		\hline
+
+		\end{array}$
+		\endgroup
+	\end{table}
+
+  using the alternate forms (need to combine $\flux_{\text{H}^+}$ and $\flux_{\text{OH}^-}$ otherwise have too many BC's)
+
+  It may be that the correct bounary conditions are those listed as [A-5] in the paper, but I am not sure yet why those are correct over these. The advantage I see in writing the BC's this way, is that it doesn't seem to allow concentrations to become negative. Instead of consuming \ch{H+} we are producing \ch{OH-}, which is kinda the same thing...
+
+  \clearpage
+  Equation 18 development from the paper. Ignores migration effects, assumes Equation \ref{eq:RDS_CER} is the rate-determining step and that the reaction follows Tafel kinetics.
+
+  \begin{equation}
+    \frac{\solcur}{2F} = \flux_{\text{CO}_2}
+  \end{equation}
+
+  \begin{equation}
+    \flux_{\text{CO}_2} = -D_{\text{CO}_2} \frac{\left( c_{\text{CO}_2, bulk} - c_{\text{CO}_2, x=0} \right) }{\delta}
+  \end{equation}
+
+  % \begin{equation}
+  %   \frac{\solcur}{2F} = k_{CER} c_{\text{CO}_2, x=0} \exp{ \left( \frac{-\beta_{CER} F \eta}{RT} \right)}
+  % \end{equation}
+
+  \begin{equation}
+    \frac{\solcur}{2F} = k_{CER} \left([\text{CO}_2]_{x=0}\right) \exp{ \left( \frac{-\beta_{CER} F \eta}{RT} \right)}
+  \end{equation}
+
+  Combining equations 7 and 8
+
+  \begin{equation*}
+    [\text{CO}_2]_{x=0} = [\text{CO}_2]_{bulk} - \frac{\delta}{D_{\text{CO}_2}} \frac{\solcur}{2F}
+  \end{equation*}
+
+  and inserting the expression for $[\text{CO}_2]_{x=0}$ into equation 9.
+
+  \begin{align*}
+    \frac{\solcur}{2F} &= k_{CER} \left([\text{CO}_2]_{x=0}\right) \exp{ \left( \frac{-\beta_{CER} F \eta}{RT} \right)}
+    \\
+    &= k_{CER} \left([\text{CO}_2]_{bulk} - \frac{\delta}{D_{\text{CO}_2}} \frac{\solcur}{2F} \right) \exp{ \left( \frac{-\beta_{CER} F \eta}{RT} \right)}
+    \\
+    \frac{\solcur}{2F} &= \frac{k_{CER} \left([\text{CO}_2]_{bulk}\right) \exp{ \left( \frac{-\beta_{CER} F \eta}{RT} \right)}}{1 + k_{CER} \frac{\delta}{D_{\text{CO}_2}} \exp{ \left( \frac{-\beta_{CER} F \eta}{RT} \right)}}
+  \end{align*}
+
+  \clearpage
+  Brian's Email
+
+  \begin{align*}
+    \bar{c}_1 &= c_{H^+} - c_{OH^-} - 2c_{CO_3^{-2}}
+    \\
+    \bar{c}_2 &= c_{CO_2} + c_{HCO_3^-} + c_{CO_3^{-2}}
+  \end{align*}
+
+
+  \clearpage
+  Reaction 1
+  \begin{chemmath}
+    CO_2 + e^- \ (+ \Gamma \ ) \reactrarrow{0pt}{1cm}{}{} CO^-_{2(ads)}
+  \end{chemmath}
+
+  \begin{equation*}
+    r_1 = k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+  \end{equation*}
+
+  \textbf{Open-Circuit Potential, $U_1$}
+  \begin{equation*}
+  \begin{split}
+    0 &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_1}{RT} \right)}
+    - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F U_1}{RT} \right)}
+    \\
+    \exp{ \left( \frac{FU_1}{RT} \right)} &=
+    \frac{k_{1c}}{k_{1a}} [{\text{CO}_2}] \frac{(1 - \theta_C - \theta_H)}{\theta_C}
+    \\
+    U_1 &= \frac{RT}{F} \ln{ \left( \frac{k_{1c}}{k_{1a}} [{\text{CO}_2}] \frac{(1 - \theta_C - \theta_H)}{\theta_C} \right)}
+    \\
+    U_{1,ref} &= \frac{RT}{F} \ln{ \left( \frac{k_{1c}}{k_{1a}} \right) }
+    \\
+    U_1 &= U_{1,ref} + \frac{RT}{F} \ln{ \left( [{\text{CO}_2}] \frac{(1 - \theta_C - \theta_H)}{\theta_C} \right)}
+  \end{split}
+  \end{equation*}
+
+
+  \textbf{Exchange-Current Density, $i_{1,\circ}$} \\
+  substitute $ \eta_1 = V - U_1$ $\rightarrow$ $ V = \eta_1 + U_1$
+  \begin{equation*}
+  \begin{split}
+    r_1 &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F (\eta_1 + U_1)}{RT} \right)}
+    - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F (\eta_1 + U_1)}{RT} \right)}
+    \\
+    r_1 &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F \eta_1}{RT} \right)} \exp{ \left( \frac{-\alpha_c F U_1}{RT} \right)} \\
+    & \quad - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F \eta_1}{RT} \right)} \exp{\left( \frac{\alpha_a F U_1}{RT} \right)}
+    \\
+    \frac{i_1}{F} &= i_{1,\circ} \left[ \exp{\left( \frac{-\alpha_c F \eta_1}{RT} \right)} -\exp{\left( \frac{\alpha_a F \eta_1}{RT} \right)}  \right]
+  \end{split}
+  \end{equation*}
+
+  \begin{equation*}
+  \begin{split}
+    i_{1,\circ} &= k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_1}{RT} \right)}
+    = k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F U_1}{RT} \right)}
+    \\
+    & = k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \left( \frac{k_{1c}}{k_{1a}} [{\text{CO}_2}] \frac{(1 - \theta_C - \theta_H)}{\theta_C} \right)^{-\alpha_c}
+    \\
+    & = k_{1c}^{(1-\alpha_c)} k_{1a}^{\alpha_c} [{\text{CO}_2}]^{(1-\alpha_c)} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{(1-\alpha_c)} \theta_C^{\alpha_c} \right]
+    \\
+    & = k_{1c}^{\alpha_a} k_{1a}^{\alpha_c} [{\text{CO}_2}]^{\alpha_a} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{\alpha_a} \theta_C^{\alpha_c} \right]
+    \end{split}
+  \end{equation*}
+
+
+
+  \textbf{Site-Balance, $\theta_C$}
+  \begin{gather*}
+    0 = k_{1c} [{\text{CO}_2}] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{1a} \left[\Gamma_{\max} \theta_C \right] \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    0 = k_{1c} [{\text{CO}_2}] \left[(1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{1a} \left[\theta_C \right] \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    \theta_C \left[ k_{1c} [{\text{CO}_2}] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)} + k_{1a} \exp{\left( \frac{\alpha_a F V}{RT} \right)} \right] =
+    k_{1c} [{\text{CO}_2}] \left[(1 - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    \\
+    \theta_C =
+    \frac{k_{1c} [{\text{CO}_2}] \left[(1 - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}}
+    {k_{1c} [{\text{CO}_2}] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)} + k_{1a} \exp{\left( \frac{\alpha_a F V}{RT} \right)} }
+    \\
+    \theta_C =
+    \frac{(1 - \theta_H)}
+    {1 + \frac{k_{1a}}{k_{1c}} [{\text{CO}_2}]^{-1} \exp{\left( \frac{(\alpha_a + \alpha_c) F V}{RT} \right)} }
+    \\
+    \theta_C =
+    \frac{(1 - \theta_H)}
+    {1 + \frac{k_{1a}}{k_{1c}} [{\text{CO}_2}]^{-1} \exp{\left( \frac{ F V}{RT} \right)} }
+    \\
+    U_{1,ref} = \frac{RT}{F} \ln{ \left( \frac{k_{1c}}{k_{1a}} \right) }
+    \\
+    \frac{k_{1c}}{k_{1a}} = \exp{ \left( \frac{FU_{1,ref}}{RT} \right)}
+    \\
+    \theta_C =
+    \frac{(1 - \theta_H)}
+    {1 + [{\text{CO}_2}]^{-1} \exp{\left( \frac{ F (V - U_{1,ref})}{RT} \right)} }
+  \end{gather*}
+
+
+  \clearpage
+  Reaction 2
+  \begin{chemmath}
+    CO_{2(ads)}^{\bullet} + H_2O + e^- \reactrarrow{0pt}{1cm}{}{} CO_{(g)} + 2OH^- \ (+ \Gamma \ )
+  \end{chemmath}
+
+  \begin{equation*}
+    r_2 = k_{2c} \left[\Gamma_{\max} \theta_C \right] \exp{ \left( \frac{-\alpha_c F \eta}{RT} \right)}
+    - k_{2a} \text{P}_{\text{CO}} \left[\text{OH}^- \right]^2
+    \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+    \exp{\left( \frac{\alpha_a F \eta}{RT} \right)}
+  \end{equation*}
+
+  Assume reaction 2 is equilibrated for the site balance
+
+  \begin{gather*}
+    0 = k_{2c} \left[\Gamma_{\max} \theta_C \right] \exp{ \left( \frac{-\alpha_c F \eta}{RT} \right)}
+    - k_{2a} \text{P}_{\text{CO}} \left[\text{OH}^- \right]^2
+    \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+  \end{gather*}
+
+
+
+  \clearpage
+  Reaction 3
+  \begin{chemmath}
+    H_2O + e^- \ (+ \Gamma \ ) \reactrarrow{0pt}{1cm}{}{} H^{\bullet}_{(ads)} + OH^-
+  \end{chemmath}
+
+  \begin{equation*}
+    r_3 = k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+  \end{equation*}
+
+  \textbf{Open-Circuit Potential, $U_3$}
+  \begin{equation*}
+  \begin{split}
+    0 &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_3}{RT} \right)}
+    - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F U_3}{RT} \right)}
+    \\
+    0 &= k_{3c} \left[(1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_3}{RT} \right)}
+    - k_{3a} \left[\theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F U_3}{RT} \right)}
+    \\
+    \exp{ \left( \frac{FU_3}{RT} \right)} &=
+    \frac{k_{3c}}{k_{3a}} \frac{(1 - \theta_C - \theta_H)}{\theta_H} \left[\text{OH}^- \right]^{-1}
+    \\
+    U_3 & = \frac{RT}{F} \ln { \left( \frac{k_{3c}}{k_{3a}} \frac{(1 - \theta_C - \theta_H)}{\theta_H} \left[\text{OH}^- \right]^{-1} \right)}
+    \\
+    U_{3,ref} &= \ln{ \left( \frac{k_{3c}}{k_{3a}} \right)}
+    \\
+    U_3 &= U_{3,ref} + \frac{RT}{F} \ln { \left( \frac{(1 - \theta_C - \theta_H)}{\theta_H} \left[\text{OH}^- \right]^{-1} \right) }
+  \end{split}
+  \end{equation*}
+
+
+  \textbf{Exchange-Current Density, $i_{3,\circ}$} \\
+  substitute $ \eta_3 = V - U_3$ $\rightarrow$ $ V = \eta_3 + U_3$
+  \begin{equation*}
+  \begin{split}
+    r_3 &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F (\eta_3 + U_3)}{RT} \right)}
+    - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F (\eta_3 + U_3)}{RT} \right)}
+    \\
+    r_3 &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F \eta_3}{RT} \right)} \exp{ \left( \frac{-\alpha_c F U_3}{RT} \right)} \\
+    & \quad - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F \eta_3}{RT} \right)} \exp{\left( \frac{\alpha_a F U_3}{RT} \right)}
+    \\
+    \frac{i_3}{F} &= i_{3, \circ} \left[ \exp{\left( \frac{-\alpha_c F \eta_3}{RT} \right)} -\exp{\left( \frac{\alpha_a F \eta_3}{RT} \right)}  \right]
+  \end{split}
+  \end{equation*}
+
+  \begin{equation*}
+  \begin{split}
+    i_{3, \circ} &= k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F U_3}{RT} \right)}
+    = k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right] \exp{\left( \frac{\alpha_a F U_3}{RT} \right)}
+    \\
+    & = k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+    \left( \frac{k_{3c}}{k_{3a}} \frac{(1 - \theta_C - \theta_H)}{\theta_H} \left[\text{OH}^- \right]^{-1} \right)^{-\alpha_c}
+    \\
+    & = k_{3c}^{(1-\alpha_c)} k_{3a}^{\alpha_c} \left[\text{OH}^- \right]^{\alpha_c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{(1-\alpha_c)} \theta_H^{\alpha_c} \right]
+    \\
+    & = k_{3c}^{\alpha_a} k_{3a}^{\alpha_c} \left[\text{OH}^- \right]^{\alpha_c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H)^{\alpha_a} \theta_H^{\alpha_c} \right]
+    \end{split}
+  \end{equation*}
+
+
+  \textbf{Site-Balance, $\theta_H$}
+  \begin{gather*}
+    0 = k_{3c} \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{3a} \left[ \Gamma_{\max} \theta_H \right] \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    \theta_H \left[ k_{3c} \exp{ \left( \frac{-\alpha_c F V}{RT} \right)} + k_{3a} \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)} \right]
+    = k_{3c} (1 - \theta_C) \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    \\
+    \theta_H = \frac{k_{3c} (1 - \theta_C) \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}}{\left[ k_{3c} \exp{ \left( \frac{-\alpha_c F V}{RT} \right)} + k_{3a} \left[\text{OH}^- \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)} \right]}
+    \\
+    \theta_H = \frac{(1 - \theta_C) }
+    {\left[ 1 + \frac{k_{3a}}{k_{3c}} \left[\text{OH}^- \right]
+    \exp{\left( \frac{F V}{RT} \right)} \right]}
+    \\
+    U_{3,ref} = \frac{RT}{F} \ln{ \left( \frac{k_{3c}}{k_{3a}} \right) }
+    \\
+    \theta_H = \frac{(1 - \theta_C) }
+    {\left[ 1 + \left[\text{OH}^- \right]
+    \exp{\left( \frac{F (V - U_{3,ref})}{RT} \right)} \right]}
+  \end{gather*}
+
+
+
+  \clearpage
+  Reaction 4
+  \begin{chemmath}
+    H^{\bullet}_{(ads)} + H_2O + e^- \reactrarrow{0pt}{1cm}{}{} H_{2(g)} + OH^- \ (+ \Gamma \ )
+  \end{chemmath}
+
+  \begin{equation*}
+    r_4 = k_{4c} \left[\Gamma_{\max} \theta_H \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+  \end{equation*}
+
+  Assume this reaction is at equilibrium, $r_4 = 0$
+
+  \begin{gather*}
+    0 = k_{4c} \left[\Gamma_{\max} \theta_H \right] \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] \left[\Gamma_{\max} (1 - \theta_C - \theta_H) \right]
+    \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    0 = k_{4c} \theta_H \exp{ \left( \frac{-\alpha_c F V}{RT} \right)}
+    - k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] (1 - \theta_C - \theta_H) \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    \theta_H \left[ k_{4c} \exp{ \left( \frac{-\alpha_c F V}{RT} \right)} +
+    k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] \exp{\left( \frac{\alpha_a F V}{RT} \right)} \right] =
+    k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] (1 - \theta_C) \exp{\left( \frac{\alpha_a F V}{RT} \right)}
+    \\
+    \theta_H \left[ k_{4c} +
+    k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] \exp{\left( \frac{ F V}{RT} \right)} \right] =
+    k_{4a} \text{P}_{\text{H}_2} \left[\text{OH}^- \right] (1 - \theta_C) \exp{\left( \frac{F V}{RT} \right)}
+    \\
+    \theta_H \left[ \frac{k_{4c}}{k_{4a}} \left(P_{H_2} \left[\text{OH}^- \right] \right)^{-1} \exp{\left( \frac{ - F V}{RT} \right)} + 1 \right] =
+    (1 - \theta_C)
+    \\
+    \theta_H = \frac{(1 - \theta_C)} {\frac{k_{4c}}{k_{4a}} \left(P_{H_2} \left[\text{OH}^- \right] \right)^{-1} \exp{\left( \frac{ - F V}{RT} \right)} + 1}
+  \end{gather*}
+
+
+
+
+
+
+
+
+
+\end{document}

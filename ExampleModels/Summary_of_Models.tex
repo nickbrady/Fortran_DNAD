@@ -1,0 +1,646 @@
+%\documentclass[12pt]{amsart}
+
+\documentclass[12pt]{article}
+\usepackage{url}
+\usepackage[margin=0.8in]{geometry}
+\geometry{a4paper}
+\usepackage[pdftex]{graphicx}
+\usepackage{subfigure}
+\usepackage[font={footnotesize},labelfont=bf]{caption}
+\usepackage{flushend}
+\usepackage{qtree}
+\usepackage[sort&compress,numbers,super]{natbib}
+
+
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage{amssymb}
+% \usepackage[T1]{fontenc} % font encoding
+% \usepackage[utf8]{inputenc} % input encoding
+% \usepackage[english]{babel} % keyword translation and hyphenation
+% \usepackage{lmodern} % lmodern looks better than cm-super
+
+\usepackage{wrapfig}
+\usepackage{dblfloatfix}
+\usepackage{textgreek}
+\usepackage{enumitem}
+\usepackage[parfill]{parskip}
+\graphicspath{ {"/Users/nicholasbrady/Google Drive/School/Academic/West Research/Projects/Data Science/PaperFigures/"} }
+\usepackage{makecell}
+\usepackage{setspace}
+% \doublespacing
+\usepackage{placeins}
+%\usepackage[outdir=./]{epstopdf}
+\usepackage{epstopdf}
+\usepackage{authblk}
+\usepackage{chemformula}
+\usepackage{color,soul}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
+\usepackage[makeroom]{cancel}
+
+\newcommand{\flux}{\mathrm{\mathbf{N}}}
+\newcommand{\vel}{\mathrm{\mathbf{v}}}
+\newcommand{\solcur}{\mathrm{\mathbf{i}}}
+\newcommand{\scrD}{\mathscr{D}}
+\DeclareMathOperator\erf{erf}
+\DeclareMathOperator\erfc{erfc}
+
+\pagecolor{black}
+\color{white}
+
+%% Uncomment to print
+% \pagecolor{white}
+% \color{black}
+
+
+
+\title{A Review of Concentrated Solution Theory as Applied to Porous-Electrode Theory}
+
+\author[1]{Nicholas W. Brady}
+\affil[1]{University of Hasselt, Hasselt 3500, Belgium}
+
+\begin{document}
+
+	\maketitle
+
+	\clearpage
+
+  	\section*{Abstract}
+
+		Summary of models
+
+	\clearpage
+	\section*{1\_Diffusion}
+
+		\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|Y|}
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Governing Equations}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{\(\displaystyle \frac{\partial c}{\partial t} = D \nabla^2 c \)} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Fluxes}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{\(\displaystyle \flux = -D \nabla c \)} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Reactions}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{\(\displaystyle 0 \)} \\
+
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Accumulation}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{\(\displaystyle \frac{\partial c}{\partial t} \)} \\
+				
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Boundary Conditions}} \\
+				\hline
+
+				\(\displaystyle c = 0 \) &  \(\displaystyle c = 1 \) \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+	\clearpage
+	\section*{2\_Diffusion\_Reaction}
+
+	\clearpage
+	\section*{3\_TwoSpecie\_Diff\_Rxn}
+
+	\clearpage
+	\section*{4\_Electrode\_HalfCell}
+
+	\clearpage
+	\section*{5\_Agglomerate}
+
+	\clearpage
+	\section*{6\_Crystal}
+
+	\clearpage
+	\section*{7\_BinarySaltILE}
+
+	\clearpage
+	\section*{8\_BrianCO2}
+
+	\clearpage
+	\section*{9\_CO2\_NoTransport}
+
+	\clearpage
+	\section*{10\_CO2\_Reduction\_SteadyState}
+
+	\clearpage
+	\section*{11\_1\_BinarySalt\_DiluteSoln.f95}
+
+	\clearpage
+	\section*{11\_BinarySalt\_ILE\_DiluteSoln}
+
+	\clearpage
+	\section*{12\_DiluteSoln\_CyclicVolt\_Steady}
+
+	\clearpage
+	\section*{13\_DiluteSoln\_CyclicVolt\_Steady\_SatConc}
+
+	\clearpage
+	\section*{14\_CO2\_Reduction\_SteadyState copy}
+
+	\clearpage
+	\section*{15\_DiluteSoln\_CyclicVolt\_HalfCell}
+
+	\clearpage
+	\section*{16\_CoolingFluid\_in\_Pipe}
+
+	\clearpage
+	\section*{17\_AppendixC}
+
+	\clearpage
+	\section*{18\_TransferencePolarization}
+
+	\clearpage
+	\section*{19\_RestrictedDiffusion}
+
+	\clearpage
+	\section*{20\_Simple\_ConcSoln\_FiniteDifference}
+
+	\clearpage
+	\section*{21\_ConcSoln\_2\_FiniteDifference}
+
+	\clearpage
+	\section*{22\_BinarySalt\_ConcSoln}
+	\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|Y|}
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Governing Equations}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{ \(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_e \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} = -\nabla \cdot N_0 \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Fluxes}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \flux_e = -\frac{\rho}{M_e} D \nabla \omega_e + \frac{\rho}{M_e} \omega_e \vel \) \\
+				\(\displaystyle \flux_0 = -\frac{\rho}{M_0} D \nabla \omega_0 + \frac{\rho}{M_0} \omega_0 \vel \) 
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Reactions}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) 
+				}
+				} \\
+
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Accumulation}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} \) 
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Boundary Conditions}} \\
+				\hline
+
+				\(\displaystyle \flux_e = 1 \times 10^{-6} \) &  \(\displaystyle \flux_e = 1 \times 10^{-6} \) \\
+				\(\displaystyle \flux_0 = 0 \) &  \(\displaystyle \flux_0 = 0 \) \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+
+
+	\clearpage
+	\section*{23\_2\_BinarySalt\_ConcSoln\_withCurrent}
+
+	The goal of this code was to incorporate $\Phi_2$ into the model. $\solcur_{applied}$ is a constant; $\solcur_2$ is a calculated value; the two values \textit{should} be equivalent.
+
+	\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|Y|}
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Governing Equations}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{ 
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_e \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} = -\nabla \cdot N_0 \) \\
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_e \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Fluxes}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \flux_e = -\frac{\rho}{M_e} D \nabla \omega_e + \frac{t_+ \cdot \solcur_{applied}}{\nu_+ z_+ F} + \frac{\rho}{M_e} \omega_e \vel \) \\
+				\(\displaystyle \flux_0 = -\frac{\rho}{M_0} D \nabla \omega_0 - \frac{1}{M_0} \left[\frac{M_+ t_+}{z_+} + \frac{M_- t_-}{z_-} \right] \frac{\solcur_{applied}}{F} + \frac{\rho}{M_0} \omega_0 \vel \) \\
+				\(\displaystyle \flux_e = -\frac{\rho}{M_e} D \nabla \omega_e + \frac{t_+ \cdot \solcur_2}{\nu_+ z_+ F} + \frac{\rho}{M_e} \omega_e \vel \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Reactions}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) 
+				}
+				} \\
+
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Accumulation}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} \) \\
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Boundary Conditions}} \\
+				\hline
+
+				\(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) &  \(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) \\
+				\(\displaystyle \flux_0 = 0 \) &  \(\displaystyle \flux_0 = 0 \) \\
+				\(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) &  \(\displaystyle \Phi_2 = 0 \) \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+		\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|}
+
+				\hline
+				\multicolumn{1}{|l|}{\textbf{Defintion of $\solcur_2$}} \\
+				\hline
+
+				\multicolumn{1}{|Y|}{
+				\makecell{
+				\(\displaystyle \solcur_2 = -\kappa \nabla \Phi_2 - \frac{\kappa}{F} \frac{t_+}{\nu_+ z_+} \nabla \mu_e \) \\
+				\(\displaystyle \nabla \mu_e = \frac{\nu_e R T a}{\rho_0} \frac{\nabla \omega_e}{\omega_e} \) \\
+				\(\displaystyle \nabla \Phi_2 = -\frac{\solcur_{applied}}{\kappa} - \frac{1}{F} \left( \frac{s_+}{n \nu_+} - \frac{s_0 c_0}{n c_e} + \frac{t_+}{\nu_+ z_+} \right) \nabla \mu_e \) 
+				}
+				} \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+
+
+	\clearpage
+	\section*{23\_3\_BinarySalt\_ConcSoln\_withCurrent}
+
+	\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|Y|}
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Governing Equations}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{ 
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_e \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} = -\nabla \cdot N_0 \) \\
+				\(\displaystyle 0 = -\nabla \cdot \solcur_2 \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Fluxes}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \flux_e = -\frac{\rho}{M_e} D \nabla \omega_e + \frac{t_+ \cdot \solcur_{applied}}{\nu_+ z_+ F} + \frac{\rho}{M_e} \omega_e \vel \) \\
+				\(\displaystyle \flux_0 = -\frac{\rho}{M_0} D \nabla \omega_0 - \frac{1}{M_0} \left[\frac{M_+ t_+}{z_+} + \frac{M_- t_-}{z_-} \right] \frac{\solcur_{applied}}{F} + \frac{\rho}{M_0} \omega_0 \vel \) \\
+				\(\displaystyle \solcur_2 = -\kappa \nabla \Phi_2 - \frac{\kappa}{F} \frac{t_+}{\nu_+ z_+} \nabla \mu_e \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Reactions}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) 
+				}
+				} \\
+
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Accumulation}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} \) \\
+				\(\displaystyle 0 \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Boundary Conditions}} \\
+				\hline
+
+				\(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) 	&  \(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) \\
+				\(\displaystyle \flux_0 = 0 \) 								&  \(\displaystyle \flux_0 = 0 \) \\
+				\(\displaystyle \Phi_2 = 0 \)  								&  \(\displaystyle \solcur_2 = \solcur_{applied} \) \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+	\clearpage
+	\section*{23\_4\_BinarySalt\_ConcSoln\_withCurrent}
+		The fluxes use $\solcur_2$ instead of $\solcur_{applied}$
+
+		\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|Y|}
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Governing Equations}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{ 
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_e \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} = -\nabla \cdot N_0 \) \\
+				\(\displaystyle 0 = -\nabla \cdot \solcur_2 \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Fluxes}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \flux_e = -\frac{\rho}{M_e} D \nabla \omega_e + \frac{t_+ \cdot \solcur_2}{\nu_+ z_+ F} + \frac{\rho}{M_e} \omega_e \vel \) \\
+				\(\displaystyle \flux_0 = -\frac{\rho}{M_0} D \nabla \omega_0 - \frac{1}{M_0} \left[\frac{M_+ t_+}{z_+} + \frac{M_- t_-}{z_-} \right] \frac{\solcur_2}{F} + \frac{\rho}{M_0} \omega_0 \vel \) \\
+				\(\displaystyle \solcur_2 = -\kappa \nabla \Phi_2 - \frac{\kappa}{F} \frac{t_+}{\nu_+ z_+} \nabla \mu_e \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Reactions}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) 
+				}
+				} \\
+
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Accumulation}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} \) \\
+				\(\displaystyle 0 \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Boundary Conditions}} \\
+				\hline
+
+				\(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) 	&  \(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) \\
+				\(\displaystyle \flux_0 = 0 \) 								&  \(\displaystyle \flux_0 = 0 \) \\
+				\(\displaystyle \Phi_2 = 0 \)  								&  \(\displaystyle \solcur_2 = \solcur_{applied} \) \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+
+
+	\clearpage
+	\section*{23\_BinarySalt\_ConcSoln\_withCurrent}
+	\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|Y|}
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Governing Equations}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{ \(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_e \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} = -\nabla \cdot N_0 \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Fluxes}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \flux_e = -\frac{\rho}{M_e} D \nabla \omega_e + \frac{t_+ \cdot \solcur_{applied}}{\nu_+ z_+ F} + \frac{\rho}{M_e} \omega_e \vel \) \\
+				\(\displaystyle \flux_0 = -\frac{\rho}{M_0} D \nabla \omega_0 - \frac{1}{M_0} \left[\frac{M_+ t_+}{z_+} + \frac{M_- t_-}{z_-} \right] \frac{\solcur_{applied}}{F} + \frac{\rho}{M_0} \omega_0 \vel \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Reactions}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) 
+				}
+				} \\
+
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Accumulation}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} \) 
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Boundary Conditions}} \\
+				\hline
+
+				\(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) 	&  \(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) \\
+				\(\displaystyle \flux_0 = 0 \) 								&  \(\displaystyle \flux_0 = 0 \) \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+
+	\clearpage
+	\section*{24\_BinarySalt\_ConcSoln\_withCurrent\_Potential}
+
+		\begin{table}[h]
+			\setcellgapes{5pt}
+			\makegapedcells
+			\centering
+			\begin{tabularx}{\textwidth}{|Y|Y|}
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Governing Equations}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{ 
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_e \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} = -\nabla \cdot N_0 \) \\
+				\(\displaystyle \frac{\nu_-}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} = -\nabla \cdot N_- \)
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Fluxes}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \flux_e = -\frac{\rho}{M_e} D \nabla \omega_e + \frac{t_+ \cdot \solcur_{applied}}{\nu_+ z_+ F} + \frac{\rho}{M_e} \omega_e \vel \) \\
+				\(\displaystyle \flux_0 = -\frac{\rho}{M_0} D \nabla \omega_0 - \frac{1}{M_0} \left[\frac{M_+ t_+}{z_+} + \frac{M_- t_-}{z_-} \right] \frac{\solcur_{applied}}{F} + \frac{\rho}{M_0} \omega_0 \vel \) \\
+				\(\displaystyle \flux_- = -\nu_- \frac{\rho}{M_e} D \nabla \omega_e + \frac{t_- \cdot \solcur_2}{z_- F} + \nu_- \frac{\rho}{M_e} \omega_e \vel \) \\
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Reactions}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) \\
+				\(\displaystyle 0 \) 
+				}
+				} \\
+
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Accumulation}} \\
+				\hline
+
+				\multicolumn{2}{|c|}{
+				\makecell{
+				\(\displaystyle \frac{1}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \) \\
+				\(\displaystyle \frac{1}{M_0} \frac{\partial (\rho \omega_0)}{\partial t} \) \\
+				\(\displaystyle \frac{\nu_-}{M_e} \frac{\partial (\rho \omega_e)}{\partial t} \) 
+				}
+				} \\
+
+				\hline
+				\multicolumn{2}{|l|}{\textbf{Boundary Conditions}} \\
+				\hline
+
+				\(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) 	&  \(\displaystyle \nu_+ z_+ F \flux_e = \solcur_{applied} \) \\
+				\(\displaystyle \flux_0 = 0 \) 								&  \(\displaystyle \flux_0 = 0 \) \\
+				\(\displaystyle \Phi_2 = 0 \) 								&  \(\displaystyle \flux_- = 0 \) \\
+
+				\hline
+
+			\end{tabularx}
+		\end{table}
+
+	\clearpage
+	\section*{24\_BinarySalt\_ConcSoln\_withCurrent\_Potential\_NoAnionFlux}
+	Unphysical Equations...
+
+	\clearpage
+	\section*{24\_BinarySalt\_ConcSoln\_withCurrent\_withPotential}
+	
+
+	\clearpage
+	\section*{25\_BinarySalt\_ConcSoln\_withCurrent\_Potential}
+
+
+	\clearpage
+	\section*{30\_UpWind}
+
+	\clearpage 
+
+
+\end{document}

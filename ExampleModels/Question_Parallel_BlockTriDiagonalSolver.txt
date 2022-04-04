@@ -1,0 +1,28 @@
+I
+
+[Prefix-Scan][1] "Applications of first-order linear recurrences include the simulation of various time-varying linear systems, the back-substitution phase of tridiagonal linear-systems solvers, and the evaluation of polynomials."
+
+[similar question][2]
+
+
+![eq1](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_j=-\left[\mathbf{A}_j\mathbf{E}_{j-1}%2b\mathbf{B}_j\right]^{-1}\mathbf{D}_j )
+
+![eq2](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_1=-\mathbf{B}_1^{-1}\mathbf{D}_1 )
+
+Writing the first several terms:
+
+![eq3](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_1=-\mathbf{B}_1^{-1}\mathbf{D}_1 )
+
+![eq4](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_2=-\left[\mathbf{A}_2\left[-\mathbf{B}_1^{-1}\mathbf{D}_1\right]%2b\mathbf{B}_2\right]^{-1}\mathbf{D}_2 )
+
+![eq5](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_3=-\left[\mathbf{A}_3\left[-\left[\mathbf{A}_2\left[-\mathbf{B}_1^{-1}\mathbf{D}_1\right]%2b\mathbf{B}_2\right]^{-1}\mathbf{D}_2\right]%2b\mathbf{B}_3\right]^{-1}\mathbf{D}_3 )
+
+![eq6](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_4=-\left[\mathbf{A}_4\left[-\left[\mathbf{A}_3\left[-\left[\mathbf{A}_2\left[-\mathbf{B}_1^{-1}\mathbf{D}_1\right]%2b\mathbf{B}_2\right]^{-1}\mathbf{D}_2\right]%2b\mathbf{B}_3\right]^{-1})
+
+![eq6.1](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_4=-\bigg[\mathbf{A}_4\Big[-\big[\mathbf{A}_3[-[\mathbf{A}_2[-\mathbf{B}_1^{-1}\mathbf{D}_1]%2b\mathbf{B}_2]^{-1}\mathbf{D}_2]%2b\mathbf{B}_3\big]^{-1}\mathbf{D}_3\Big])![eq6.2](https://chart.googleapis.com/chart?cht=tx&chl=%2b\mathbf{B}_4\bigg]^{-1}\mathbf{D}_4)
+
+![eq7.1](https://chart.googleapis.com/chart?cht=tx&chl=https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{E}_5=-\Bigg[\mathbf{A}_5\bigg[-\bigg[\mathbf{A}_4\Big[-\big[\mathbf{A}_3[-[\mathbf{A}_2[-\mathbf{B}_1^{-1}\mathbf{D}_1]%2b\mathbf{B}_2]^{-1}\mathbf{D}_2]%2b\mathbf{B}_3\big]^{-1} )![eq7.2](https://chart.googleapis.com/chart?cht=tx&chl=\mathbf{D}_3\Big]%2b\mathbf{B}_4\bigg]^{-1}\mathbf{D}_4\bigg]%2b\mathbf{B}_5\Bigg]^{-1}\mathbf{D}_5)
+
+
+  [1]: http://www.cs.cmu.edu/~guyb/papers/Ble93.pdf
+  [2]: https://stackoverflow.com/questions/34868437/sequential-operation-in-gpu-implementation

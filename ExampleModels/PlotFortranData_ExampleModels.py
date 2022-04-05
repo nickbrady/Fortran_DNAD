@@ -645,7 +645,7 @@ f.savefig(os.getcwd() + '/Electrode_Data_Compare.pdf', format='pdf', dpi=300, bb
 # In[10]:
 print((48.348 - 45.638)/45.638)
 print((16.800 - 15.785)/15.785)
-print((6.810 - 6.093)/6.093
+print((6.810 - 6.093)/6.093)
 
 
 # In[5]:

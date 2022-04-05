@@ -1,0 +1,289 @@
+%\documentclass[12pt]{amsart}
+
+\documentclass[12pt]{article}
+\usepackage{url}
+\usepackage[margin=0.8in]{geometry}
+\geometry{a4paper}
+\usepackage[pdftex]{graphicx}
+\graphicspath{ {"/Users/nicholasbrady/Documents/Post-Doc/Projects/OneDrive - imec/Solid-State-Electrolyte/Experiment/ECEMC/"},
+			   {"/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/Dilute_Solution_Theory/"},
+			   {"/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/No_Current/"},
+			   {"/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/With_Current/"} }
+\usepackage[font={footnotesize},labelfont=bf]{caption}
+\usepackage{subcaption}
+% \usepackage{subfigure}
+
+\usepackage{flushend}
+\usepackage{qtree}
+\usepackage[sort&compress,numbers,super]{natbib}
+
+
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage{amssymb}
+% \usepackage[T1]{fontenc} % font encoding
+% \usepackage[utf8]{inputenc} % input encoding
+% \usepackage[english]{babel} % keyword translation and hyphenation
+% \usepackage{lmodern} % lmodern looks better than cm-super
+
+\usepackage{wrapfig}
+\usepackage{dblfloatfix}
+\usepackage{textgreek}
+\usepackage{enumitem}
+\usepackage[parfill]{parskip}
+
+\usepackage{makecell}
+\usepackage{setspace}
+% \doublespacing
+\usepackage{placeins}
+%\usepackage[outdir=./]{epstopdf}
+\usepackage{epstopdf}
+\usepackage{authblk}
+\usepackage{chemformula}
+\usepackage{color,soul}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
+\usepackage[makeroom]{cancel}
+
+\newcommand{\flux}{\mathrm{\mathbf{N}}}
+\newcommand{\vel}{\mathrm{\mathbf{v}}}
+\newcommand{\solcur}{\mathrm{\mathbf{i}}}
+\newcommand{\scrD}{\mathscr{D}}
+\DeclareMathOperator\erf{erf}
+\DeclareMathOperator\erfc{erfc}
+
+\pagecolor{black}
+\color{white}
+
+%% Uncomment to print
+% \pagecolor{white}
+% \color{black}
+
+
+
+\title{Comparison of Concentrated and Dilute Solution Theory For A Binary Salt Electrolyte}
+
+\author[1]{Nicholas W. Brady}
+\affil[1]{University of Hasselt, Hasselt 3500, Belgium}
+
+\begin{document}
+
+	\maketitle
+
+	\clearpage
+
+  	\section*{Outline}
+
+  		\begin{enumerate}
+	  		\item Literature Data
+			\item Dilute Solution Theory
+			\item Concentration Solution Theory
+		\end{enumerate}
+
+	\clearpage
+	\section*{Literature Data}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\textwidth]{LiPF6_in_EC_EMC_Transport_Parameters.pdf}
+		\caption{Graphical respresentation of the transport parameters for the \ch{LiPF6} in EC:EMC electrolyte.}
+		\label{fig:TransportParameters_EC_EMC}
+	\end{figure}
+
+	\begin{equation}
+		\rho(c,T) = p_1 + p_2c + p_3T
+	\end{equation}
+
+	\begin{equation}
+		\kappa(c,T) = p_1(1 + (T-p_2)) \cdot c \cdot \frac{(1 + p_3 \sqrt{c} + p_4(1 + p_5\exp(1000/T))c )} {(1 + c^4(p_6\exp(1000/T)))}
+	\end{equation}
+
+	\begin{equation}
+		D_{\pm}(c,T) = p_1\exp(p_2c) \exp(p_3/T) \exp(p_4/T \cdot c) \times 10^{-6}
+	\end{equation}
+
+	\begin{equation}
+		t_{Li^+}(c,T) = p_1 + p_2 c + p_3 T + p_4 c^2 + p_5 c T + p_6 T^2 + p_7 c^3 + p_8 c^2 T + p_9 c T^2
+	\end{equation}
+
+	\begin{equation}
+		\Phi = \Phi_{ref} + \frac{R T}{F} \ln{\left[\frac{1 - \theta}{\theta} \right]} + \sum_{k=0}^{N} A_k \left[ (2\theta - 1)^{k+1} - \frac{2\theta k(1 - \theta)}{(2\theta - 1)^{1-k}} \right] \ \ \ \ ; \ \ \ \ \theta = \frac{c}{c_{max}}
+	\end{equation}
+
+	\begin{equation}
+		\ln(a) = p_6 c^6 + p_5 c^5 + p_4 c^4 + p_3 c^3 + p_2 c^2 + p_1 c^1 + p_0
+	\end{equation}
+
+	\begin{equation}
+		\solcur = -\kappa \nabla \Phi - \frac{\kappa}{F} \left( \frac{s_+}{n \nu_+} - \frac{s_0 c}{n c_0} + \frac{t_+}{\nu_+ z_+} \right) \nabla \mu_e
+	\end{equation}
+
+	when $\solcur = 0$, and there are no homogeneous reactions, $s_+ = s_0 = 0$
+
+	\begin{equation} \label{eq:dPhi_to_dmu}
+		\nabla \Phi  =  - \frac{1}{F} \left( \frac{t_+}{\nu_+ z_+} \right) \nabla \mu_e
+	\end{equation}
+
+	Integration of equation \ref{eq:dPhi_to_dmu} is used to calcualte the chemical potential $\mu_e$ from concentration cell data, $\Phi$ vs $c$. The activity is then calculated using the equation
+
+	\begin{equation}
+		\mu_e = \nu_e RT \ln{a}
+	\end{equation}
+
+	\clearpage 
+
+	\section{Dilute Solution Theory}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\textwidth]{LiPF6_in_EC_EMC_Transport_Parameters_DiluteSoln.pdf}
+		\caption{Graphical respresentation of the transport parameters for the \ch{LiPF6} in EC:EMC electrolyte. The black curves are the best fits to the measured experimental data. The colored curves on the diffusion coefficient plot, represent the diffusion coefficients of the individual ions \ch{Li+} and \ch{PF6-} calculated using dilute solution theory from the values of the the salt diffusion coefficient, $D_{\pm}$, and the transference number, $t_{Li^+}$; while the red curve on the conductivity plot represents the calculated value of the conductivity assuming dilute solution theory and using the calculated values of $D_{Li^+}$ and $D_{PF_6^-}$. }
+		\label{fig:DiluteTransportParams_EC_EMC}
+	\end{figure}
+
+	\begin{equation} % equation 11.9
+		t_j = \frac{z_j^2 u_j c_j}{\sum_i z_i^2 u_i c_i}
+	\end{equation}
+
+	For a binary salt
+	\begin{equation}
+		t_+ = 1 - t_- = \frac{z_+ u_+}{z_+ u_+ - z_- u_-}
+	\end{equation}
+
+	\begin{equation}
+		\frac{u_+}{u_-} = \frac{D_+}{D_-} = \frac{-z_- t_+}{z_+ (1 - t_+)}
+	\end{equation}	
+
+	\begin{equation} % equation 11.22
+		D = \frac{z_+ u_+ D_- - z_- u_- D_+}{z_+ u_+ - z_- u_-}
+	\end{equation}
+
+	Using the equation for the salt diffusion coefficient and the ratio of the diffusion coefficients of the individual ions, derived from the equation for the transference number, we can relate the diffusion coefficients of the individual ions to the salt diffusion coefficient and the transference number:
+
+	\begin{align} 
+		D_+ &= \frac{D}{\left(1 - \frac{z_+}{z_-} \right)(1 - t_+)}
+		\\
+		D_- &= \frac{D}{\left(1 - \frac{z_-}{z_+} \right) t_+}
+	\end{align}
+
+	What might already be obvious is the relationship between the diffusion coefficients and the value of the transference number:
+
+	\begin{align*}
+		D_+ > D_-,& \quad \text{if } t_{+} > 0.5, \\
+		D_+ = D_-,& \quad \text{if } t_+ = 0.5, \\
+		D_+ < D_-,& \quad \text{if } t_+ < 0.5
+	\end{align*}	
+
+
+	\begin{equation}
+		\solcur = F \sum_i z_i \flux_i
+	\end{equation}
+
+	\begin{align*}
+		\solcur &= F(z_+ \flux_+ + z_- \flux_-) 
+		\\
+		&= F (-z_+ D_+ \nabla c_+ - z_+^2 u_+ c_+ F \nabla \Phi_2 + z_+ c_+ \vel
+		   - z_- D_- \nabla c_- - z_-^2 u_- c_- F \nabla \Phi_2 + z_- c_- \vel)
+		\\
+		&= -\left(z_+ \nu_+ D_+ + z_- \nu_- D_- \right) F \nabla c
+			- \left[ z_+^2 u_+ (\nu_+ c) + z_-^2 u_- (\nu_- c) \right] F^2 \nabla \Phi_2
+	\end{align*}
+
+	\begin{align*}
+		\kappa &= 
+		\left[ z_+^2 u_+ \nu_+ + z_-^2 u_- \nu_- \right] c F^2
+		\\
+		&= \frac{F^2}{RT} \left[ z_+^2 D_+ \nu_+ + z_-^2 D_- \nu_- \right] c 
+	\end{align*}
+
+	when $\solcur = 0$
+	\begin{equation}
+		F\nabla \Phi_2 = -\frac{(D_+ - D_-)}{z_+ u_+ - z_- u_-} \frac{\nabla c}{c}
+	\end{equation}
+
+	$z_+ u_+ - z_- u_-$ is always positive. When $D_+ > D_-$ (i.e. $t_+ > 0.5$), then $\nabla \Phi_2$ and $\nabla c$ will have opposite signs; when $D_+ < D_-$ (i.e. $t_+ < 0.5$), then $\nabla \Phi_2$ and $\nabla c$ will have the same sign.
+
+	\begin{align*}
+		D_+ > D_-& \quad \& \quad \frac{d\Phi}{dc} < 0, \quad \text{if } t_{+} > 0.5, \\
+		D_+ = D_-& \quad \& \quad \frac{d\Phi}{dc} = 0, \quad \text{if } t_+ = 0.5, \\
+		D_+ < D_-& \quad \& \quad \frac{d\Phi}{dc} > 0, \quad \text{if } t_+ < 0.5
+	\end{align*}
+
+	\clearpage
+	\begin{figure}
+		\centering
+		\begin{subfigure}{0.5\textwidth}
+		  \centering
+		  \includegraphics[width=0.95\textwidth]{Conc_Profiles_t_Li_LessThan_Half.pdf}
+		  \caption{$t_{Li^+} < 0.5$}
+		  \label{fig:ECEMC_t_lt_Half}
+		\end{subfigure}%
+		\begin{subfigure}{0.5\textwidth}
+		  \centering
+		  \includegraphics[width=0.95\textwidth]{Conc_Profiles_t_Li_GreaterThan_Half.pdf}
+		  \caption{$t_{Li^+} > 0.5$}
+		  \label{fig:ECEMC_t_gt_Half}
+		\end{subfigure}
+		\caption{Comparison of profiles that develop when A) $t_{Li^+} < 0.5$, and B) $t_{Li^+} > 0.5$. }
+		\label{fig:fig:ECEMC_t_lt_gt_Half}
+	\end{figure}
+
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{Phi_vs_Conc_Profiles.pdf}
+		\caption{Comparison of the $\Phi_2$ vs $c_{LiPF_6}$ profiles that develop depending on the value of the $t_{Li^+}$.}
+		\label{fig:dPhi_dc}
+	\end{figure}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{Conc_Profiles_t_Li_Measured.pdf}
+		\caption{Concentration and potential profiles assuming dilute solution theory for \ch{LiPF6} in EC:EMC using the measured values of $t_{Li^+}$ (see Figure \ref{fig:TransportParameters_EC_EMC}.}
+		\label{fig:Sim_MeasTransportParams_ECEMC}
+	\end{figure}
+
+
+
+	\clearpage
+	\section{Concentrated Solution Theory}
+
+	\begin{equation}
+		t^0_{Li^+} = \frac{z_+ \mathscr{D}_{0+}}{z_+\mathscr{D}_{0+} - z_-\mathscr{D}_{0-}}
+	\end{equation}
+
+	\begin{align}
+		\mathscr{D} &= \frac{\mathscr{D}_{0+}\mathscr{D}_{0-}(z_+ - z_-)}{z_+\mathscr{D}_{0+} - z_-\mathscr{D}_{0-}}
+		\\
+		&= t_+^0 \mathscr{D}_{0-} + t_-^0 \mathscr{D}_{0+}
+		\\
+		&= t_+^0 \mathscr{D}_{0-} + (1 - t_+^0) \mathscr{D}_{0+}
+	\end{align}
+
+	\begin{equation}
+		\kappa = -\frac{z_+ z_- c_T F^2}{RT} \frac{(c_- \mathscr{D}_{0+} + c_+ \mathscr{D}_{0-}) \mathscr{D}_{+-}}{c_- \mathscr{D}_{0+} + c_+ \mathscr{D}_{0-} + c_0 \mathscr{D}_{+-}}
+	\end{equation}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{Conc_Profiles_ConcSoln_NoCurrent.pdf}
+		\caption{Concentration and velocity profiles assuming concentrated solution theory using the measured values of $D$ and $\rho$, but assuming no current is passed; instead fixed flux boundary conditions are used.}
+	\end{figure}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=1.0\textwidth]{Conc_Profiles_ConcSoln_WithCurrent.pdf}
+		\caption{Concentration, velocity, and potential profiles assuming concentrated solution theory, using the measured values of $D$, $t_{Li^+}$, and $\kappa$.}
+	\end{figure}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.5\textwidth]{Phi_vs_Conc_Conc_Soln.pdf}
+		\caption{Potential versus concentration profiles: the black circles are simulated data and the red curve is the fit to the concentration cell measurements.}
+	\end{figure}
+	
+
+
+\end{document}

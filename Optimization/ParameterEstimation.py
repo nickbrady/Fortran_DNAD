@@ -14,9 +14,20 @@ from scipy.optimize import minimize
 from scipy.interpolate import interp1d
 from scipy import interpolate
 from sobol_seq import i4_sobol_generate     # Sobol Package used to generate Sobol Sequence
-import re
 
 import tempfile as tp
+
+import re
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text): # allows for the more natural sorting of text (1, 2, 3, ... instead of 1, 10, 2, 3,...)
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split('(\d+)', text) ]
 
 def plot_parameters():
     matplotlib.rcParams['lines.linewidth'] = 3    # change the default line thickness for plots to 4
@@ -687,3 +698,266 @@ sim_time = np.unique(sim_data['Time'].values)
 plt.plot(sim_time, sim_Delta_Phi_2, 'r-')
 
 print(sum((exp_Delta_Phi_2 - sim_Delta_Phi_2)**2))
+
+
+# In[30]:
+'''
+	Estimate D_LiPF6 in EC:EMC
+'''
+exp_data_directory = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/PseodoExpts/RestrictDiff/'
+
+concentration_folders = next(os.walk(exp_data_directory))[1]
+concentration_folders.sort(key=natural_keys)
+
+rows, columns = [1, len(concentration_folders)]
+ax, fig = axes(1, rows, columns)
+
+
+#
+exp_Data_File = 'Time_Voltage_Position.txt'
+for o, c_fold in enumerate(concentration_folders):
+	_exp_data_file_ = os.path.join(exp_data_directory, c_fold, exp_Data_File)
+	exp_data = pd.read_table(_exp_data_file_, delim_whitespace=True, header=0, skiprows=[1])
+
+	max_values = exp_data.max()
+	exp_Delta_Phi_2 = exp_data['Φ_2'][exp_data['Position'] == 0].values \
+				  	  - exp_data['Φ_2'][exp_data['Position'] == max_values.Position].values
+	exp_time = np.unique(exp_data['Time'].values)
+
+	ax[o+1].plot(exp_time, exp_Delta_Phi_2, 'k--')
+
+#
+sim_data_directory = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/Sim_Param_Est/RestrictDiff'
+sim_Data_File = 'Time_Voltage_Position.txt'
+for o, c_fold in enumerate(concentration_folders):
+	print(o, c_fold)
+	_sim_data_file_ = os.path.join(sim_data_directory, c_fold, sim_Data_File)
+	sim_data = pd.read_table(_sim_data_file_, delim_whitespace=True, header=0, skiprows=[1])
+
+	max_values = sim_data.max()
+	sim_Delta_Phi_2 = sim_data['Φ_2'][sim_data['Position'] == 0].values \
+				  	  - sim_data['Φ_2'][sim_data['Position'] == max_values.Position].values
+	sim_time = np.unique(sim_data['Time'].values)
+
+	ax[o+1].plot(sim_time, sim_Delta_Phi_2, 'r-')
+
+
+# In[31]:
+sim_Restrict_Diff = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/Sim_Param_Est/RestrictDiff/'
+
+os.chdir(sim_Restrict_Diff)
+
+source = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/Sim_Param_Est/LiPF6_in_EC_EMC.f95'
+destination_file = "LiPF6_in_EC_EMC_val.f95"
+
+# def parameter_estimation_error(params):
+	# print(params)
+_dest_temp = os.path.join(sim_Restrict_Diff, destination_file)
+
+shutil.copyfile(source, _dest_temp)
+
+c = np.array((0, 1.5, 2.5, 5.0))
+D_values = np.array((6, 2.5, 1.5, 0.5))*1e-6
+D_spline = interpolate.CubicSpline(c, D_values)
+	#
+parameter_strings = ['__FORTRAN_SPLINE_CODE__']
+sed(parameter_strings[0], write_Fortran_Spline(D_spline), _dest_temp)
+
+concentrations = [0.5, 1.0, 2.5]
+run_concentrations(concentrations, _dest_temp, destination_file)
+
+sim_Data_File = 'Time_Voltage_Position.txt'
+
+for conc in concentrations:
+	c_fold = '{}'.format(conc)
+
+	exp_data_directory = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/PseodoExpts/RestrictDiff/'
+	_exp_data_file_ = os.path.join(exp_data_directory, c_fold, exp_Data_File)
+	exp_data = pd.read_table(_exp_data_file_, delim_whitespace=True, header=0, skiprows=[1])
+
+	max_values = exp_data.max()
+	exp_Delta_Phi_2 = exp_data['Φ_2'][exp_data['Position'] == 0].values \
+				  	  - exp_data['Φ_2'][exp_data['Position'] == max_values.Position].values
+	exp_time = np.unique(exp_data['Time'].values)
+
+##############################################################################################################
+##############################################################################################################
+
+	sim_data = pd.read_table(os.path.join(sim_Restrict_Diff, c_fold, sim_Data_File),
+		delim_whitespace=True, header=0, skiprows=[1])
+	max_values = sim_data.max()
+	sim_Delta_Phi_2 = sim_data['Φ_2'][sim_data['Position'] == 0].values \
+				  	  - sim_data['Φ_2'][sim_data['Position'] == max_values.Position].values
+	sim_time = np.unique(sim_data['Time'].values)
+	#
+	Sim_data_Reduced = Reduce_Data((sim_time, sim_Delta_Phi_2), (exp_time, exp_Delta_Phi_2))
+	error = sum((Sim_data_Reduced[1] - exp_Delta_Phi_2)**2)
+	print(error)
+
+
+
+# In[33]:
+concentrations = [0.5, 1.0, 2.5]
+
+def run_concentrations(concentrations, _dest_temp, destination_file):
+	for conc in concentrations:
+		os.chdir(sim_Restrict_Diff)
+
+		subfolder = '{}'.format(conc)
+		# print(conc)
+
+		try:
+			os.makedirs(subfolder)
+		except:
+			pass
+
+		os.chdir(subfolder)
+
+		_destination = os.path.join(sim_Restrict_Diff, subfolder, destination_file)
+
+		shutil.copyfile(_dest_temp, _destination)
+
+		# need lower the applied current for lower concentrations
+		parameter_strings = ['c_LiPF6_bulk = 1.0e-3']
+		sed(parameter_strings[0], 'c_LiPF6_bulk = {}e-3'.format(conc), _destination)
+
+		run_fortran_path = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/RunFortran.py'
+		p = call(['python3', run_fortran_path, _destination])
+
+
+# In[40]:
+c = np.array((0, 1.5, 2.5, 5.0))
+D_values = np.array((6, 2.5, 1.5, 0.2))*1e-6
+
+D_spline = interpolate.CubicSpline(c, D_values)
+
+c_hat = np.linspace(0,5e-3) * 1000
+
+D_salt_true =  f_D_salt(c_hat)
+
+plt.plot(c_hat, D_salt_true)
+plt.plot(c, D_values, 'rs')
+plt.plot(c_hat, D_spline(c_hat), 'r-')
+
+# In[50]:
+sim_Restrict_Diff = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/Sim_Param_Est/RestrictDiff/'
+
+os.chdir(sim_Restrict_Diff)
+
+source = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/Sim_Param_Est/LiPF6_in_EC_EMC.f95'
+destination_file = "LiPF6_in_EC_EMC_val.f95"
+
+def parameter_estimation_error(D_values, c_values):
+	global Nfeval
+	_dest_temp = os.path.join(sim_Restrict_Diff, destination_file)
+
+	shutil.copyfile(source, _dest_temp)
+
+
+	D_spline = interpolate.CubicSpline(c, D_values)
+		#
+	parameter_strings = ['__FORTRAN_SPLINE_CODE__']
+	sed(parameter_strings[0], write_Fortran_Spline(D_spline), _dest_temp)
+
+	concentrations = [0.5, 1.0, 2.5]
+	run_concentrations(concentrations, _dest_temp, destination_file)
+
+	sim_Data_File = 'Time_Voltage_Position.txt'
+
+	error = 0.0
+	for conc in concentrations:
+		c_fold = '{}'.format(conc)
+
+		exp_data_directory = '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/26_LiPF6_in_EC_EMC/PseodoExpts/RestrictDiff/'
+		_exp_data_file_ = os.path.join(exp_data_directory, c_fold, exp_Data_File)
+		exp_data = pd.read_table(_exp_data_file_, delim_whitespace=True, header=0, skiprows=[1])
+
+		max_values = exp_data.max()
+		exp_Delta_Phi_2 = exp_data['Φ_2'][exp_data['Position'] == 0].values \
+					  	  - exp_data['Φ_2'][exp_data['Position'] == max_values.Position].values
+		exp_time = np.unique(exp_data['Time'].values)
+
+	##############################################################################################################
+	##############################################################################################################
+
+		sim_data = pd.read_table(os.path.join(sim_Restrict_Diff, c_fold, sim_Data_File),
+			delim_whitespace=True, header=0, skiprows=[1])
+		max_values = sim_data.max()
+		sim_Delta_Phi_2 = sim_data['Φ_2'][sim_data['Position'] == 0].values \
+					  	  - sim_data['Φ_2'][sim_data['Position'] == max_values.Position].values
+		sim_time = np.unique(sim_data['Time'].values)
+		#
+		Sim_data_Reduced = Reduce_Data((sim_time, sim_Delta_Phi_2), (exp_time, exp_Delta_Phi_2))
+		error_ = sum((Sim_data_Reduced[1] - exp_Delta_Phi_2)**2)
+
+		error += error_
+
+	D_ = D_values*1e6
+	print( '{0:4d}   {1: 3.6f}   {2: 3.6f}   {3: 3.6f}   {4: 3.6f}   {5: 3.6f}'.format(
+		Nfeval, D_[0], D_[1], D_[2], D_[3], error ) )
+	Nfeval += 1
+
+	return error
+
+# In[51]:
+c_values = np.array((0, 1.5, 2.5, 5.0))
+D_values = np.array((10, 8, 6, 4))*1e-6
+
+Nfeval = 1
+# def callbackF(Xi):
+# 	global Nfeval
+# 	# print( '{0:4d}   {1: 3.6f}   {2: 3.6f}   {3: 3.6f}   {4: 3.6f}   {5: 3.6f}'.format(
+# 		# Nfeval, Xi[0]*1e6, Xi[1]*1e6, Xi[2]*1e6, Xi[3]*1e6, parameter_estimation_error(Xi)) )
+# 	print( '{0:4d}   {1: 3.6f}   {2: 3.6f}   {3: 3.6f}   {4: 3.6f}'.format(
+# 		Nfeval, Xi[0]*1e6, Xi[1]*1e6, Xi[2]*1e6, Xi[3]*1e6 ) )
+# 	Nfeval += 1
+#
+print( '{0:4s}   {1:9s}   {2:9s}   {3:9s}   {4:9s}   {5:9s}'.format(
+		'Iter', ' X1', ' X2', ' X3', ' X4', ' f(X)') )
+
+
+res = minimize(parameter_estimation_error, D_values, args = (c_values,),
+	bounds=((0, 10e-6),)*len(c_values),
+	method='nelder-mead', options={'disp': False, 'maxiter': 100})
+
+# In[52]:
+c_values = np.array((0, 1.5, 2.5, 5.0))
+D_values = np.array((10, 4, 3, 1))*1e-6
+
+res = minimize(parameter_estimation_error, D_values, args = (c_values,),
+	bounds=((0, 10e-6),)*len(c_values),
+	options={'disp': True, 'maxiter': 100, 'eps': 1e-7, 'gtol': 1e-6})
+
+# In[53]:
+Bounds = ((0,10e-6),)*4
+Complete_List_of_Parameters = sobol(Bounds, 50)
+
+Nfeval = 1
+print( '{0:4s}   {1:9s}   {2:9s}   {3:9s}   {4:9s}   {5:9s}'.format(
+		'Iter', ' X1', ' X2', ' X3', ' X4', ' f(X)') )
+
+for point in Complete_List_of_Parameters:
+	parameter_estimation_error(point, c_values)
+
+# In[54]:
+os.chdir(sim_Restrict_Diff)
+sobol_results = pd.read_table('Sobol_Sampling.txt', delim_whitespace=True, header=0, skiprows=None)
+sobol_results = sobol_results.set_index('Iter', drop=True)
+print(sobol_results.head())
+
+print(sobol_results.sort_values('f(X)').head())
+
+print(sobol_results.filter(items = [14], axis=0).values[0][:4])
+
+c = np.array((0, 1.5, 2.5, 5.0))
+D_values = sobol_results.filter(items = [36], axis=0).values[0][:4] * 1e-6
+
+D_spline = interpolate.CubicSpline(c, D_values)
+
+c_hat = np.linspace(0,5e-3) * 1000
+
+D_salt_true =  f_D_salt(c_hat)
+
+plt.plot(c_hat, D_salt_true)
+plt.plot(c, D_values, 'rs')
+plt.plot(c_hat, D_spline(c_hat), 'r-')

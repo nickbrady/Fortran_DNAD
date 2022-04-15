@@ -39,7 +39,6 @@ contains
     character(len=:), allocatable, intent(in) :: Geometry
     integer :: j
 
-    print*, Geometry
     ctrl_vol(1) = 0.0
     ctrl_vol(NJ) = 0.0
 

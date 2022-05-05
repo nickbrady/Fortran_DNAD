@@ -70,6 +70,10 @@
 !******************************************************************************
 !* Change Log
 !*-----------------------------------------------------------------------------
+!*  2022-05-05  Nicholas Brady
+!*  - added overloading of integers and reals to dual powers: pow_id, pow_rd
+!*  - as well as for complex dual numbers: pow_i_dc, pow_r_dc, pow_c_dc
+!*
 !*  2022-03-24  Nicholas Brady
 !*  - added type dual_complex (these have various physical applications)
 !*  - extended the overloading of many intrinsic functions (but not all) to
@@ -229,14 +233,19 @@ module dnadmod
 
     public operator (**)
     interface operator (**)
-        module procedure pow_i ! dual number to an integer power,elemental
-        module procedure pow_r ! dual number to a real power, elemental
-        module procedure pow_d ! dual number to a dual power, elemental
+        module procedure pow_di ! dual number to an integer power,elemental
+        module procedure pow_dr ! dual number to a real power, elemental
+        module procedure pow_dd ! dual number to a dual power, elemental
+        module procedure pow_id ! integer to a dual power, elemental
+        module procedure pow_rd ! real to a dual power, elemental
 
         module procedure pow_dc_i ! dual_complex number to an integer power,elemental
         module procedure pow_dc_r ! dual_complex number to a real power, elemental
         module procedure pow_dc_c ! dual_complex number to a complex power, elemental
         module procedure pow_dc_dc ! dual_complex number to a dual_complex power, elemental
+        module procedure pow_i_dc ! integer to a dual_complex power, elemental
+        module procedure pow_r_dc ! real to a dual_complex power, elemental
+        module procedure pow_c_dc ! complex number to a dual_complex power, elemental
     end interface
 
     public operator (==)
@@ -383,7 +392,7 @@ module dnadmod
     public log
     interface log
         module procedure log_d ! log of a dual number, elemental
-        module procedure log_dc ! log of a dual number, elemental
+        module procedure log_dc ! log of a dual_complex number, elemental
     end interface
 
     public log10
@@ -524,9 +533,9 @@ module dnadmod
 
     public erf
     interface erf
-        module procedure erf_d
-        module procedure erf_c
-        module procedure erf_dc
+        module procedure erf_d      ! erf of a dual number 
+        module procedure erf_c      ! erf of a complex number
+        module procedure erf_dc     ! erf of a dual_complex number
     end interface
 
 contains
@@ -952,7 +961,7 @@ contains
     ! power(dual, integer)
     ! <res, dres> = <u, du> ^ i = <u ^ i, i * u ^ (i - 1) * du>
     !-----------------------------------------
-    elemental function pow_i(u, i) result(res)
+    elemental function pow_di(u, i) result(res)
         type(dual), intent(in) :: u
         integer, intent(in) :: i
         type(dual) :: res
@@ -963,13 +972,13 @@ contains
         res%x = u%x * pow_x
         res%dx = real(i) * pow_x * u%dx
 
-    end function pow_i
+    end function pow_di
 
     !-----------------------------------------
     ! power(dual, double)
     ! <res, dres> = <u, du> ^ r = <u ^ r, r * u ^ (r - 1) * du>
     !-----------------------------------------
-    elemental function pow_r(u, r) result(res)
+    elemental function pow_dr(u, r) result(res)
         type(dual), intent(in) :: u
         real, intent(in) :: r
         type(dual) :: res
@@ -980,21 +989,51 @@ contains
         res%x = u%x * pow_x
         res%dx = r * pow_x * u%dx
 
-    end function pow_r
+    end function pow_dr
 
     !-----------------------------------------
-    ! POWER dual numbers to a dual power
+    ! POWER dual number to a dual power
     ! <res, dres> = <u, du> ^ <v, dv>
     !     = <u ^ v, u ^ v * (v / u * du + Log(u) * dv)>
     !-----------------------------------------
-    elemental function pow_d(u, v) result(res)
-        type(dual), intent(in)::u, v
+    elemental function pow_dd(u, v) result(res)
+        type(dual), intent(in) :: u, v
         type(dual) :: res
 
         res%x = u%x ** v%x
         res%dx = res%x * (v%x / u%x * u%dx + log(u%x) * v%dx)
 
-    end function pow_d
+    end function pow_dd
+
+    !-----------------------------------------
+    ! POWER integer to a dual power
+    ! <res, dres> = i ^ <u, du>
+    !     = <i ^ u, i ^ u * Log(i) * du)>
+    !-----------------------------------------
+    elemental function pow_id(i, u) result(res)
+        integer, intent(in) :: i
+        type(dual), intent(in) :: u
+        type(dual) :: res
+
+        res%x = i ** u%x
+        res%dx = res%x * log(real(i)) * u%dx
+
+    end function pow_id
+
+    !-----------------------------------------
+    ! POWER real to a dual power
+    ! <res, dres> = r ^ <u, du>
+    !     = <r ^ u, r ^ u * Log(r) * du)>
+    !-----------------------------------------
+    elemental function pow_rd(r, u) result(res)
+        real, intent(in) :: r
+        type(dual), intent(in) :: u
+        type(dual) :: res
+
+        res%x = r ** u%x
+        res%dx = res%x * log(r) * u%dx
+
+    end function pow_rd    
 
 !******* end: (**)
 !---------------------
@@ -2692,13 +2731,58 @@ contains
   !     = <u ^ v, u ^ v * (v / u * du + Log(u) * dv)>
   !-----------------------------------------
   elemental function pow_dc_dc(u, v) result(res)
-      type(dual_complex), intent(in)::u, v
+      type(dual_complex), intent(in) :: u, v
       type(dual_complex) :: res
 
       res%z = u%z ** v%z
       res%dz = res%z * (v%z / u%z * u%dz + log(u%z) * v%dz)
 
   end function pow_dc_dc
+
+  !-----------------------------------------
+  ! POWER integer numbers to a dual_complex power
+  ! <res, dres> = i ^ <u, du>
+  !     = <i ^ u, i ^ u * Log(i) * du>
+  !-----------------------------------------
+  elemental function pow_i_dc(i, u) result(res)
+      integer, intent(in)   :: i
+      type(dual_complex), intent(in) :: u
+      type(dual_complex) :: res
+
+      res%z = i ** u%z
+      res%dz = res%z * log(real(i)) * u%dz
+
+  end function pow_i_dc
+
+  !-----------------------------------------
+  ! POWER real numbers to a dual_complex power
+  ! <res, dres> = r ^ <u, du>
+  !     = <r ^ u, r ^ u * Log(r) * du)>
+  !-----------------------------------------
+  elemental function pow_r_dc(r, u) result(res)
+      real, intent(in) :: r
+      type(dual_complex), intent(in) :: u
+      type(dual_complex) :: res
+
+      res%z = r ** u%z
+      res%dz = res%z * log(r) * u%dz
+
+  end function pow_r_dc
+
+  !-----------------------------------------
+  ! POWER complex number to a dual_complex power
+  ! <res, dres> = c ^ <u, du>
+  !     = <c ^ u, c ^ u * Log(c) * du)>
+  !-----------------------------------------
+  elemental function pow_c_dc(c, u) result(res)
+      complex, intent(in) :: c
+      type(dual_complex), intent(in) :: u
+      type(dual_complex) :: res
+
+      res%z = c ** u%z
+      res%dz = res%z * log(c) * u%dz
+
+  end function pow_c_dc
 
 !******* end: (**)
 !---------------------

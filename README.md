@@ -1,5 +1,5 @@
 # Fortran_DNAD
-Implement DNAD (Automatic Differentiation) into Newman's `BAND` subroutine
+Implements DNAD (Automatic Differentiation) into Newman's `BAND` subroutine
 
 This code combines 3 items already developed in the literature:
 1. John Newman's `BAND` subroutine (Appendix C, page 619 of Electrochemical Systems 3rd Ed. by John Newman and Karen E. Thomas-Alyea (2004))

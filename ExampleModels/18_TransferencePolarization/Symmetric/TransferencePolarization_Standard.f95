@@ -2,10 +2,10 @@ module user_input
   implicit none
 
   integer, parameter :: N = 2
-  integer, parameter :: NJ = 202                        ! Number of mesh points
+  integer, parameter :: NJ = 1002                        ! Number of mesh points
   integer, parameter :: Numbertimesteps = 100 * 60 * 1e3       ! Number of time steps
   integer, parameter :: maxIterations = 1e6
-  real               :: delT = 1.0e0                   ! size of timestep [s]
+  real               :: delT = 1.0e-1                   ! size of timestep [s]
   real               :: time = 0.0                      ! [s]
   logical            :: UPWIND = .FALSE.
   character(len=65)  :: direction = 'WestToEast'
@@ -51,23 +51,22 @@ module Electrochemical_Program_Mod
   real    :: pulse_time = 60
   real    :: end_time_prev_cyc = 0.0
   integer :: cycle_n = 1
-  integer :: cycle_loops = 5
+  integer :: cycle_loops = 10
+  real    :: experiment_time = 100*3600.
 
 contains
   ! Current Profile
   subroutine current_profile()
+    experiment_time = cycle_loops*(rest_time+pulse_time)
 
     if ((time - end_time_prev_cyc) >= (rest_time + pulse_time)) then
       end_time_prev_cyc = time
       cycle_n = cycle_n + 1
+      ! call initial_condition() ! reset the concentration profiles (mimic waiting a long time)
     end if
 
-    if ((time - end_time_prev_cyc) <= 60) then
-      if (cycle_n <= 3) then
-        i_applied_cm2 = 1.0e-6 !* cycle_n*5
-      else
-        i_applied_cm2 = 1.0e-6 * (cycle_n-3)*5
-      end if
+    if ((time - end_time_prev_cyc) < pulse_time) then
+      i_applied_cm2 = 1.0e-3 * (cycle_n)*2
 
     else
       i_applied_cm2 = 0.0
@@ -85,7 +84,7 @@ module write_data_mod
   implicit none
 
   character(len=65) :: header_fmt = '(1(A12,1X),   1(A10,1X), 20(A15,1X)) '
-  character(len=65) :: data_fmt   = '(1(F12.5,1X), 1(I10,1X), 20(ES15.5,1X))'
+  character(len=65) :: data_fmt   = '(1(F12.5,1X), 1(I10,1X), 20(ES20.10,1X))'
 
   real :: t_write
 
@@ -115,7 +114,15 @@ contains
     !   end if                                    ! even intervals
     !
     ! else
-      if ( (time - last_write_time) >= 1.0) then
+      if ( ((time - end_time_prev_cyc) >= pulse_time).AND. &
+          & ((time - end_time_prev_cyc) <= (1.0 + 0.5*delT + pulse_time)) ) then
+        ! write every time step for first 1 second of relaxation
+        call write_positional_information_to_file(it)
+
+        last_write_time = time! - delT*0.5
+      end if
+
+      if ( (time - last_write_time) >= write_every_x_sec) then
         call write_to_screen(it)
         call write_positional_information_to_file(it)
 
@@ -159,7 +166,7 @@ contains
     end if                                              !
 
 
-    do j = 1, NJ                                    !
+    do j = 1, NJ, int(NJ/10)                                    !
       conc_Li    = cprev(1,j)
       Phi_2      = cprev(2,j)
                                                     !
@@ -323,7 +330,7 @@ program unsteady
         call write_condition(it)
         call current_profile()
 
-        if (time >= 20000) then
+        if (time >= experiment_time) then
           call write_condition(it)
           exit
         end if

@@ -1103,6 +1103,8 @@ subroutine initial_condition()
   ! end do
   
   ! calculate exponential / logarithmic mesh using secant-method
+  ! delX_max is the maximum desired spacing between node points
+  ! produces a grid symmetric about xmax/2
   delX_max = h*4
   ! use small values of x0 and x1 (1e-300, 1e-299)
   ! plotting the function reveals that convergence is more likely when
@@ -1142,8 +1144,6 @@ contains
     real, dimension(mesh_pts) :: delX
     integer             :: j
     real                :: h_log
-    
-    ! delX_max = 4 * xmax/(mesh_pts-1)
 
     h_log = (log10(delX_max) - log10(initial_delX)) / float(mesh_pts-2)
 
@@ -1175,14 +1175,15 @@ contains
     x1_x0_diff = 1e30
 
 
-    do while ((abs(x1_x0_diff) > tolerance) .AND. (i < max_iterations))
+    do while ((abs(x1_x0_diff) > tolerance) &
+      &       .AND. (i < max_iterations)    &
+              .AND. (x0 /= x1)  )
+      
       f_x0 = sum(delX_mesh(x0, delX_max, NJ/2, xmax/2)) - xmax/2
       f_x1 = sum(delX_mesh(x1, delX_max, NJ/2, xmax/2)) - xmax/2
       x1_x0_diff = f_x1 - f_x0
-      if (x1_x0_diff == 0.0) then
-        x2 = x1
-        return
-      end if
+
+      if (x1_x0_diff == 0.0) return ! x1_x0_diff = 0 produces divide by zero error
 
       x2 = x1 - f_x1 * (x1 - x0) / (f_x1 - f_x0)
       x0 = x1

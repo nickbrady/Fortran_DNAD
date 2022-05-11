@@ -1,7 +1,7 @@
 module user_input
   implicit none
 
-  integer, parameter :: N = 2   ! LiPF6 salt concentration, mass-average velocity
+  integer, parameter :: N = 3   ! LiPF6 salt concentration, mass-average velocity
   integer, parameter :: NJ = 102                          ! Number of mesh points
   integer, parameter :: Numbertimesteps = 1e3*3600 !3.6d3*1000     ! Number of time steps
   real               :: delT = 1e-1/3                       ! size of timestep [s]
@@ -73,16 +73,21 @@ module TRANSPORT_MODULE
     module procedure c_A_to_x_A_real
   end interface
 
+  interface c_A_to_c_B
+    module procedure c_A_to_c_B_dual
+    module procedure c_A_to_c_B_real
+  end interface
+
   ! practical and fundament diffusion coefficient
   interface diffusion_coef_LiTFSI_in_EMI_TFSI
     module procedure diffusion_coef_LiTFSI_in_EMI_TFSI_dual
     module procedure diffusion_coef_LiTFSI_in_EMI_TFSI_real
   end interface
 
-!   interface conductivity_LiTFSI_in_EMI_TFSI
-!     module procedure conductivity_LiTFSI_in_EMI_TFSI_dual
-!     module procedure conductivity_LiTFSI_in_EMI_TFSI_real
-!   end interface
+  interface conductivity_LiTFSI_in_EMI_TFSI
+    module procedure conductivity_LiTFSI_in_EMI_TFSI_dual
+    module procedure conductivity_LiTFSI_in_EMI_TFSI_real
+  end interface
 
   ! tranference number with respect to different reference velocities
   ! mass-averaged
@@ -106,13 +111,33 @@ contains
 !   - mole fraction, mass fraction, chemical potential, density
 !*******************************************************************************
 ! cₐ 
-  function c_A_to_x_A_dual(c_A)                  result(x_A)
-    type(dual)                :: x_A
+  function c_A_to_c_B_dual(c_A)                  result(c_B)
+    type(dual)                :: c_B
     type(dual), intent(in)    :: c_A
-    type(dual)                :: rho, c_B
+    type(dual)                :: rho
 
     rho = density(c_A)
     c_B = (rho - MW_A_LiTFSI * c_A) / MW_B_EMITFSI
+
+  end function c_A_to_c_B_dual
+
+  function c_A_to_c_B_real(c_A)                  result(c_B)
+    real                :: c_B
+    real, intent(in)    :: c_A
+    real                :: rho
+
+    rho = density(c_A)
+    c_B = (rho - MW_A_LiTFSI * c_A) / MW_B_EMITFSI
+
+  end function c_A_to_c_B_real
+
+
+  function c_A_to_x_A_dual(c_A)                  result(x_A)
+    type(dual)                :: x_A
+    type(dual), intent(in)    :: c_A
+    type(dual)                :: c_B
+
+    c_B = c_A_to_c_B(c_A)
     x_A = c_A / (c_A + c_B)
 
   end function c_A_to_x_A_dual
@@ -120,13 +145,17 @@ contains
   function c_A_to_x_A_real(c_A)                  result(x_A)
     real                :: x_A
     real, intent(in)    :: c_A
-    real                :: rho, c_B
+    real                :: c_B
 
-    rho = density(c_A)
-    c_B = (rho - MW_A_LiTFSI * c_A) / MW_B_EMITFSI
+    c_B = c_A_to_c_B(c_A)
     x_A = c_A / (c_A + c_B)
 
   end function c_A_to_x_A_real
+
+
+
+
+
 
 
   function c_A_to_w_A(cA)                  result(wA)
@@ -599,8 +628,8 @@ contains
     vel_1  = cprev(2,1)
     vel_NJ = cprev(2,NJ-1)
 
-    ! Phi_2_1 = cprev(3,1)
-    ! Phi_2_NJ = cprev(3,NJ)
+    Phi_2_1 = cprev(3,1)
+    Phi_2_NJ = cprev(3,NJ)
 
     density_1   = density(c_LiTFSI_1)
     density_NJ  = density(c_LiTFSI_NJ)
@@ -672,7 +701,7 @@ contains
     do j = 1, NJ
       c_LiTFSI   = cprev(1,j)
       vel       = cprev(2,j)
-      ! Phi_2     = cprev(3,j) - Phi_2_NJ
+      Phi_2     = cprev(3,j) - Phi_2_NJ
       density_  = density(c_LiTFSI)
       w_a       = MW_A_LiTFSI * c_LiTFSI / density_
 
@@ -867,32 +896,39 @@ contains
   !
   ! end function dmudx_e_function
 
-  ! function solution_current_i2_function(c_vars_dual, dcdx_vars_dual)  Result(i2)
-  !   type(dual)                            :: i2
-  !   type(dual), dimension(N), intent(in)  :: c_vars_dual, dcdx_vars_dual
-  !   type(dual)                            :: c_LiTFSI, kappa, t_Li
-  !   type(dual)                            :: dPhi2_dx
-  !   type(dual)                            :: mu_e, dmudx_e
-  !   real                                  :: dmu_dc, t_Li_1
+  function solution_current_i2_function(c_vars_dual, dcdx_vars_dual)  Result(i2)
+    type(dual)                            :: i2
+    type(dual), dimension(N), intent(in)  :: c_vars_dual, dcdx_vars_dual
+    type(dual)                            :: c_LiTFSI, x_LiTFSI, kappa, t_Li_c
+    type(dual)                            :: c_EMITFSI
+    type(dual)                            :: dPhi2_dx
+    type(dual)                            :: mu_a, dmudx_a
+    real                                  :: dmu_dc, t_Li_1
 
-  !   ! i = -κ∇Φ_2 - κ/F*(s_1/(n ν_1^A + t_1^c/(z_1 v_1^A)) - s_0 c_0 / (n c_e) + t^0_+/(ν_+ z_+)) ∇μ_e
-  !   c_LiTFSI = c_vars_dual(1)
-  !   ! kappa    = conductivity_LiPF6_in_EC_EMC(c_LiPF6)
-  !   t_Li     = transference_1_mass_avg(c_LiTFSI)
+    ! i = -κ∇Φ_2 - κ/F*[ s_1/(n ν_1^A + t_1^c/(z_1 v_1^A)) 
+    !                   - s_0 c_0 / (n c_e) + t^0_+/(ν_+ z_+) ] ∇μ_e
+    c_LiTFSI = c_vars_dual(1)
+    kappa    = conductivity_LiTFSI_in_EMI_TFSI(c_LiTFSI)
+    t_Li_c   = transference_Li_common_ion(c_LiTFSI)
 
-  !   mu_a    = chemical_potential_LiPF6(c_LiTFSI)
-  !   dmu_dc  = mu_e%dx(1)
-  !   dmudx_a = dmu_dc * dcdx_vars_dual(1) ! dμ/dx = dμ/dc * dc/dx
+    x_LiTFSI = c_A_to_x_A(c_LiTFSI)
+    mu_a    = chemical_potential(x_LiTFSI)
+    dmu_dc  = mu_a%dx(1)
+    dmudx_a = dmu_dc * dcdx_vars_dual(1) ! dμ/dx = dμ/dc * dc/dx
 
-  !   ! dPhi2_dx = dcdx_vars_dual(3)
+    c_EMITFSI = c_A_to_c_B(c_LiTFSI)
 
-  !   ! i2 = -kappa*dPhi2_dx - kappa/Fconst*(t_Li)/(nu_cat*z_cat) * dmudx_e
+    dPhi2_dx = dcdx_vars_dual(3)
 
-  !   ! i2 = -kappa*dPhi2_dx
+    i2 = -kappa*dPhi2_dx - kappa/Fconst*( &
+    &   t_Li_c/(nu_A_Li*z_Li)*(1 + nu_A_TFSI*c_LiTFSI/(nu_B_TFSI*c_EMITFSI)) ) * dmudx_a
 
-  !   ! print*, kappa%x
+    
+    ! i2 = -kappa*dPhi2_dx
 
-  ! end function solution_current_i2_function
+    ! print*, kappa%x
+
+  end function solution_current_i2_function
 
 ! ******************************************************************************
 ! **************************** GOVERNING EQUATIONS *****************************
@@ -922,15 +958,15 @@ contains
     Diff_ = diffusion_coef_LiTFSI_in_EMI_TFSI(c_LiTFSI)
     t_Li_mass  = transference_Li_mass_avg(c_LiTFSI)
 
-    ! print*, dcdx_vars_dual(1)%x
-
-    ! i2_sol_curr = solution_current_i2_function(c_vars_dual, dcdx_vars_dual)
+    i2_sol_curr = solution_current_i2_function(c_vars_dual, dcdx_vars_dual)
+    ! print*, c_vars_dual(1)%x, c_vars_dual(2)%x, c_vars_dual(3)%x
+    ! print*, dcdx_vars_dual(1)%x, dcdx_vars_dual(2)%x, dcdx_vars_dual(3)%x
 
     ! FLUX_(1) = -Diff_pract * dcdx_LiTFSI + t_Li_mass * i2_sol_curr/(nu_A_Li*z_cat*Fconst) + c_LiTFSI * vel_mass_avg
 
     FLUX_(1) = -nu_A_Li*Diff_ * dcdx_LiTFSI + t_Li_mass * i_app_cm2/(nu_A_Li*z_Li*Fconst) + nu_A_Li*c_LiTFSI * vel_mass_avg
     FLUX_(2) =  density_*vel_mass_avg
-    ! FLUX_(3) =  i2_sol_curr
+    FLUX_(3) =  i2_sol_curr
 
   end function FLUX
 
@@ -944,7 +980,7 @@ contains
 
     Rxn_(1) = 0.0
     Rxn_(2) = 0.0
-    ! Rxn_(3) = 0.0
+    Rxn_(3) = 0.0
 
   end function RXN
 
@@ -963,7 +999,7 @@ contains
     ! Accum_(1) = density_/MW_A_LiTFSI * w_a/delT
     Accum_(1) = nu_A_Li * c_LiTFSI/delT
     Accum_(2) = density_/delT
-    ! Accum_(3) = 0.0
+    Accum_(3) = 0.0
 
     Accum_%x = 0.0
 
@@ -993,11 +1029,11 @@ contains
     type(dual)                             :: Phi_2
 
     flux_temp = FLUX(c_vars_dual, dcdx_vars_dual)
-    ! Phi_2 = c_vars_dual(3)
+    Phi_2 = c_vars_dual(3)
 
     BC_WEST_(1) = flux_temp(1) - i_app_cm2/(z_Li*nu_A_Li*Fconst)
     BC_WEST_(2) = flux_temp(2) - flux_temp(1)*MW_Li
-    ! BC_WEST_(3) = flux_temp(3) - i_app_cm2
+    BC_WEST_(3) = flux_temp(3) - i_app_cm2
 
 
   end function Boundary_WEST
@@ -1014,7 +1050,7 @@ contains
     type(dual)                             :: i2, Phi_2
     type(dual)                             :: d_density_dx
 
-    ! Phi_2 = c_vars_dual(3)
+    Phi_2        = c_vars_dual(3)
 
     vel          = c_vars_dual(2)
     dveldx       = dcdx_vars_dual(2)
@@ -1030,7 +1066,7 @@ contains
     BC_EAST_(1)  = flux_temp(1) - i_app_cm2/(z_Li*nu_A_Li*Fconst)
     ! ∇⋅(ρ𝐯) = 0 = 𝐯⋅∇ρ + ρ∇𝐯
     BC_EAST_(2)  = d_density_dx*vel + density_*dveldx - 0.0
-    ! BC_EAST_(3) = Phi_2 - 0.0
+    BC_EAST_(3)  = Phi_2 - 0.0
 
   end function Boundary_EAST
 ! ******************************************************************************
@@ -1096,14 +1132,16 @@ subroutine initial_condition()
 
   h = xmax/float(nj-2)
   
-  ! linear mesh
+! LINEAR MESH
   delx(1) = 0.0               ! it is common in the finite volume
   delx(2:NJ-1) = h            ! algorithm to set the control
   delx(NJ) = 0.0              ! volumes at the boundaries to zero
   ! do j = 1, NJ
   !   print*, j, delX(j)
   ! end do
-  
+
+!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!
+! LOGARITHMIC MESH
   ! calculate exponential / logarithmic mesh using secant-method
   ! delX_max is the maximum desired spacing between node points
   ! produces a grid symmetric about xmax/2
@@ -1116,6 +1154,7 @@ subroutine initial_condition()
   delX(:NJ/2) = delX_mesh(delX_init, delX_max, NJ/2, xmax/2)
   delX(NJ/2) = xmax/2.0 - sum(delX(:NJ/2-1))  ! set delX(NJ/2) to exact value necessary
   delX(NJ/2+1:NJ-1) = delX(NJ/2:2:-1)
+!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!
 
   ! xx positions are calculated from delX
   xx(1) = 0.0
@@ -1126,6 +1165,7 @@ subroutine initial_condition()
   do j = 1, NJ
     cprev(1,j) = c_LiTFSI_bulk
     cprev(2,j) = vel_0
+    cprev(3,j) = 0.0
   end do
 
   control_volume_input = trim(geometry)                   ! Define the control volume

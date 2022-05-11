@@ -1104,13 +1104,13 @@ subroutine initial_condition()
   
   ! calculate exponential / logarithmic mesh using secant-method
   delX_max = h*4
-  ! use small values of x0 and x1 (1e-11, 1e-10)
+  ! use small values of x0 and x1 (1e-300, 1e-299)
   ! plotting the function reveals that convergence is more likely when
   ! the initial guess values are too small as opposed to too big
                             !  x0,    x1,             tol, max_it
-  delX_init = secant_method(1e-11, 1e-10, delX_max, 1e-15, 100)
+  delX_init = secant_method(1e-300, 1e-299, delX_max, 1e-15, 100)
   delX(:NJ/2) = delX_mesh(delX_init, delX_max, NJ/2, xmax/2)
-  delX(NJ/2) = xmax/2.0 - sum(delX(:NJ/2-1))
+  delX(NJ/2) = xmax/2.0 - sum(delX(:NJ/2-1))  ! set delX(NJ/2) to exact value necessary
   delX(NJ/2+1:NJ-1) = delX(NJ/2:2:-1)
 
   ! xx positions are calculated from delX
@@ -1174,7 +1174,6 @@ contains
     i = 0
     x1_x0_diff = 1e30
 
-    print*, 'secant function'
 
     do while ((abs(x1_x0_diff) > tolerance) .AND. (i < max_iterations))
       f_x0 = sum(delX_mesh(x0, delX_max, NJ/2, xmax/2)) - xmax/2
@@ -1184,8 +1183,6 @@ contains
         x2 = x1
         return
       end if
-
-      print*, i, x0, f_x0, x1, f_x1
 
       x2 = x1 - f_x1 * (x1 - x0) / (f_x1 - f_x0)
       x0 = x1

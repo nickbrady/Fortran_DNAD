@@ -32,9 +32,9 @@ end module user_input
 ! ******************************************************************************
 ! dnadmod and variables
 ! ******************************************************************************
-! __CORE__MODULES_PATH__
-include '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/dnadmod.f95'
-include '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/variables.f95'
+! CORE_MODULES_PATH = /Users/brady22/Documents/Aestec/Models/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods
+include '/Users/brady22/Documents/Aestec/Models/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/dnadmod.f95'
+include '/Users/brady22/Documents/Aestec/Models/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/variables.f95'
 ! ******************************************************************************
 
 ! ******************************************************************************
@@ -235,7 +235,7 @@ end module GOV_EQNS
 ! ******************************************************************************
 ! auto_fill, ABDGXY, BAND, MATINV
 ! ******************************************************************************
-include '/Users/nicholasbrady/Documents/Post-Doc/Projects/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/BAND_MOD.f95'
+include '/Users/brady22/Documents/Aestec/Models/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods/BAND_MOD.f95'
 ! ******************************************************************************
 
 ! ******************************************************************************

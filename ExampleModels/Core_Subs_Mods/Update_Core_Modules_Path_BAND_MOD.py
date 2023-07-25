@@ -51,37 +51,18 @@ def sed(pattern, replace, source, dest=None, count=0):
     if not dest:
         shutil.move(name, source)
 
-def run_fortran(_run_file_=None):
-    # p = call(['gfortran', '-fdefault-real-8', '-O3', _run_file_])
-    if _run_file_ == None:
-        _run_file_ = glob.glob('*.f95')
-        _run_file_ = _run_file_[0]
-    # fortran_file = glob.glob('*.f95')
-    p = call(['gfortran', '-fdefault-real-8', '-O3', _run_file_])
-    p = call(['./a.out'])
 
-    # remove executable and module files
-    p = call(['rm', 'a.out'])
-    for fl in glob.glob('*.mod'):
-        os.remove(fl)
+CORE_MODULES_PATH = os.getcwd()
+print(CORE_MODULES_PATH)
 
-
-cwd = os.getcwd()
-print(cwd)
-
-CORE_MODULES_PATH = '/Users/brady22/Documents/Aestec/Models/Fortran/Fortran_DNAD/ExampleModels/Core_Subs_Mods'
-# run_fortran()
-
-fortran_template = 'Diffusion_1Specie_DNAD_template.f95'
-fortran_specific_file = 'Diffusion_1Specie_DNAD_test.f95'
+fortran_template = 'BAND_MOD_template.f95'
+fortran_specific_file = 'BAND_MOD.f95'
 
 # Write the correct CORE_MODULES_PATH in the file - this is in lines that use "include"
 sed(pattern='__CORE__MODULES_PATH__', 
     replace=CORE_MODULES_PATH, 
     source=fortran_template, dest=fortran_specific_file)
 
-# run the fortran code
-run_fortran(fortran_specific_file)
 # sort the modules in the fortran file
 # p = call(['SortFortranModules.py', fortran_template])
 # _sorted_fortran_template = 'ReSort' + fortran_template
